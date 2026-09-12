@@ -59,3 +59,30 @@ The candidate decides:
 - Do not commit secrets or personal API keys. Use `.env.example`-style
   placeholders if a script needs a key.
 
+## Coding style
+- Use /Assets/Scripts as main script folder
+- Use namspaces e.g. /Assets/Scripts/Interaction -> CompanyName.Interaction
+- Use descriptive naming
+- Small methods
+- Single responsibility
+- Explicit dependencies
+- Readonly where appropriate
+- Private by default
+- Prefer set/get to get access to private variables over making the variable public.
+- Prefer Events/Scriptable objects instead of direct references when possible.
+- Prefer reusability and modularity.
+- Write performance optimized code.
+
+## Workflow
+- Ask before installing packages
+
+## Comment / Documentation style
+- Write comments that explain "why". A few high level comments explaining the purpose of classes or methods is very helpful. Comments explaining tricky code are also helpful.
+- Avoid comments that are redundant with the code. Do not comment before each line of code explaining what it does unless there is something that is not obvious going on.
+
+## Things to avoid
+- Don't add third-party assets without asking.
+- Giant MonoBehaviours.
+- God classes.
+- Direct references.
+- Static global state.
