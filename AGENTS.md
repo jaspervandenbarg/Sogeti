@@ -11,10 +11,27 @@ and grows trees inside a limited play space.
 - Target device: Meta Quest 3, standalone
 - Unity project folder: `Trees for All/`
 - Repo host: GitHub
+- Company name: `Sogeti`
 
 The project is a fresh Unity template. No gameplay code exists yet. The XR
 Interaction Toolkit Starter Assets sample is imported for reference under
 `Assets/Samples/`.
+
+## Testing constraint — no VR hardware
+The developer has no Quest 3 or other headset. All testing happens on PC.
+
+- Test interactions in Unity Play Mode using the XR Interaction Toolkit
+  Device Simulator and/or the Meta XR Simulator, not on a physical device.
+- Build interactions on standard OpenXR/Input System actions so the PC
+  simulator and the Quest 3 build behave the same way.
+- Avoid Quest-only APIs with no PC simulation path. If one is needed,
+  isolate it behind an interface so the rest of the game stays testable
+  without a headset.
+- When a design decision affects testability (hand tracking vs.
+  controllers, passthrough, haptics, headset-only sensors), state the
+  tradeoff and how it gets verified without hardware.
+- Treat a Quest 3 build as unverified beyond "it builds and installs"
+  until the developer or someone else confirms it on-device.
 
 ## Assignment rules (fixed — do not relax without asking the user)
 Source: `Opdrachtomschrijving XR developer Sogeti.pdf` (repo root).
@@ -46,6 +63,9 @@ The candidate decides:
 - Placeholder art is allowed. A reasonable look is a plus.
 - The target player has little to moderate game experience. Favor clear
   onboarding and simple controls over complex mechanics.
+- Default to comfort-friendly VR locomotion (teleport and/or snap turn).
+  Avoid forced smooth camera rotation/movement unless the user asks for it,
+  since novice players are more prone to motion sickness.
 - State each design decision as a short code comment near the relevant
   code. Keep the assignment's own intent (show design reasoning) but
   follow this repo's comment style: one line, state the why, not the what.
@@ -53,15 +73,14 @@ The candidate decides:
   is not part of the default Unity template or an installed package.
 
 ## Repo conventions
-- Put new gameplay scripts under `Trees for All/Assets/Scripts/`.
+- Put new gameplay scripts under `/Assets/Scripts/`.
 - Do not commit `Library/`, `Temp/`, `Logs/`, `UserSettings/`, or other
   paths already listed in `.gitignore`.
 - Do not commit secrets or personal API keys. Use `.env.example`-style
   placeholders if a script needs a key.
 
 ## Coding style
-- Use /Assets/Scripts as main script folder
-- Use namspaces e.g. /Assets/Scripts/Interaction -> CompanyName.Interaction
+- Use namespaces e.g. `Assets/Scripts/Interaction` -> Sogeti.Interaction
 - Use descriptive naming
 - Small methods
 - Single responsibility
@@ -71,10 +90,19 @@ The candidate decides:
 - Prefer set/get to get access to private variables over making the variable public.
 - Prefer Events/Scriptable objects instead of direct references when possible.
 - Prefer reusability and modularity.
-- Write performance optimized code.
+- Define each seed type as a ScriptableObject, not an enum or hardcoded
+  list, so new seed types don't need code changes.
+- Avoid per-frame allocations and heavy work in `Update()`. The Quest 3 is
+  mobile-class hardware; profile before adding costly logic to hot paths.
 
 ## Workflow
-- Ask before installing packages
+- Ask before installing packages.
+- Verify features in Play Mode with the XR Device Simulator or Meta XR
+  Simulator before calling them done. Do not claim a feature "works" based
+  only on a successful Quest 3 build.
+- Call out anything that cannot be verified without a physical headset
+  (e.g. real haptics feel, real hand tracking) so the developer knows what
+  still needs on-device confirmation.
 
 ## Comment / Documentation style
 - Write comments that explain "why". A few high level comments explaining the purpose of classes or methods is very helpful. Comments explaining tricky code are also helpful.
@@ -84,5 +112,6 @@ The candidate decides:
 - Don't add third-party assets without asking.
 - Giant MonoBehaviours.
 - God classes.
-- Direct references.
 - Static global state.
+- Quest-only APIs with no PC simulation path, unless isolated behind an
+  interface (see testing constraint above).
