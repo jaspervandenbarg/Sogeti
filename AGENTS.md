@@ -113,5 +113,30 @@ The candidate decides:
 - Giant MonoBehaviours.
 - God classes.
 - Static global state.
-- Quest-only APIs with no PC simulation path, unless isolated behind an
-  interface (see testing constraint above).
+- Quest-only APIs with no PC simulation path, unless isolated behind an interface (see testing constraint above).
+
+## Steps
+- The user can move using teleport on Terrain layers
+- - Obstacle layers can not be teleported on
+- A UI hovers in front of the user on start explaining the goal and controls
+- The user can open a UI menu where he can pick tools to use or seeds to plant
+- The user can plant trees on Terrain layers
+- - Trees can be planted using the pointer
+- - The user cannot plant trees on any other layers
+- - Trees cannot be planted near other types of trees
+- Trees can grow to different stage
+- - Trees show a water meter that slowly drops
+- - water meter starts at 50% for each growing stage except the last
+- - The water meter dissapears when the tree is fully grown
+- - The tree dies when the water meter is empty
+- - The tree grows to the next stage when the water meter is full
+- Users can water the trees using a watering can
+- - Users tilt the watering can over/next to the trees to water the trees.
+- - Optional: the watering can empties when pouring, refill using a pond or tap.
+- The user gets points for each tree stage reached per tree
+- - the longer it takes to reach a stage the fewer points the user receives.
+- - later stages provide more points e.g. seed -> +10 points, sprout -> +20 points, fully grown tree +40
+- Game has a timer after which the game ends
+- - Timer time to be determined
+- - Show user score
+- - Show Restart button

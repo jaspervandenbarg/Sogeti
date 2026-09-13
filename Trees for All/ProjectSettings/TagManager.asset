@@ -38,9 +38,9 @@ TagManager:
   - Terrain
   - Water
   - UI
-  - 
-  - 
-  - 
+  - PlayerObstacle
+  - UniversalObstacle
+  - Overlay UI
   - 
   - 
   - 
