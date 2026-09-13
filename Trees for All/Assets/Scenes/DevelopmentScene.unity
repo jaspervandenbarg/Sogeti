@@ -636,6 +636,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 18ddb545287c546e19cc77dc9fbb2189, type: 3}
+--- !u!114 &1586860379 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4917469202140490039, guid: 49c135c5866e7b64d861e49f959f8421, type: 3}
+  m_PrefabInstance: {fileID: 3980434948245349614}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 01f69dc1cb084aa42b2f2f8cd87bc770, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!20 &1929785047 stripped
 Camera:
   m_CorrespondingSourceObject: {fileID: 6664397839300108207, guid: 49c135c5866e7b64d861e49f959f8421, type: 3}
@@ -728,6 +739,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 690270233679302553, guid: c7839a776c8a1744496e4b4453ff6092, type: 3}
+      propertyPath: m_Layer
+      value: 5
+      objectReference: {fileID: 0}
     - target: {fileID: 939277119397821290, guid: c7839a776c8a1744496e4b4453ff6092, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -777,14 +792,19 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 201720106}
     - target: {fileID: 3454312704524045031, guid: c7839a776c8a1744496e4b4453ff6092, type: 3}
-      propertyPath: m_FilterSelectionByHitNormal
-      value: 1
+      propertyPath: m_TeleportationProvider
+      value: 
+      objectReference: {fileID: 1586860379}
+    - target: {fileID: 4806801635899506087, guid: c7839a776c8a1744496e4b4453ff6092, type: 3}
+      propertyPath: m_Layer
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 8807778501947468356, guid: c7839a776c8a1744496e4b4453ff6092, type: 3}
       propertyPath: m_Camera
       value: 
       objectReference: {fileID: 1929785047}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 4165466173862719790, guid: c7839a776c8a1744496e4b4453ff6092, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
@@ -857,6 +877,10 @@ PrefabInstance:
       propertyPath: m_InteractionManager
       value: 
       objectReference: {fileID: 201720106}
+    - target: {fileID: 6664397839300108207, guid: 49c135c5866e7b64d861e49f959f8421, type: 3}
+      propertyPath: m_CullingMask.m_Bits
+      value: 4294967039
+      objectReference: {fileID: 0}
     - target: {fileID: 6934270991183752827, guid: 49c135c5866e7b64d861e49f959f8421, type: 3}
       propertyPath: m_InteractionManager
       value: 

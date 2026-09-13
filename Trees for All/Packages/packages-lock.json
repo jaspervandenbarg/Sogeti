@@ -98,7 +98,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity-atoms.unity-atoms": {
-      "version": "https://github.com/unity-atoms/unity-atoms.git",
+      "version": "https://github.com/unity-atoms/unity-atoms.git#c3ac88cb226f23bf237226c9a04932ef74c055f2",
       "depth": 0,
       "source": "git",
       "dependencies": {},
