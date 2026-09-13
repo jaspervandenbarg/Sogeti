@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2f868f8b3380b47a38cf0b95f42c134b, type: 3}
+  m_Name: CameraPosition
+  m_EditorClassIdentifier: UnityAtoms.UnityAtomsBaseAtoms.Runtime::UnityAtoms.BaseAtoms.Vector3Variable
+  _developerDescription: The world positon of the player camera
+  _id: 
+  _value: {x: 0, y: 0, z: 0}
+  _changed: {fileID: 4691650101384705297}
+  _changedWithHistory: {fileID: 0}
+  _triggerChangedOnOnEnable: 0
+  _triggerChangedWithHistoryOnOnEnable: 0
+  _oldValue: {x: 0, y: 0, z: 0}
+  _initialValue: {x: 0, y: 0, z: 0}
+  _preChangeTransformers: []
+--- !u!114 &4691650101384705297
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c19800e64279c44e1ae4529ee6a2d780, type: 3}
+  m_Name: CameraPositionChangedVector3Event
+  m_EditorClassIdentifier: UnityAtoms.UnityAtomsBaseAtoms.Runtime::UnityAtoms.BaseAtoms.Vector3Event
+  _developerDescription: 
+  _replayBufferSize: 1
+  _inspectorRaiseValue: {x: 0, y: 0, z: 0}
