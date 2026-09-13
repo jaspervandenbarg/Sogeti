@@ -115,7 +115,7 @@ The candidate decides:
 - Static global state.
 - Quest-only APIs with no PC simulation path, unless isolated behind an interface (see testing constraint above).
 
-## Steps
+## Steps for the game
 - The user can move using teleport on Terrain layers
 - - Obstacle layers can not be teleported on
 - A UI hovers in front of the user on start explaining the goal and controls

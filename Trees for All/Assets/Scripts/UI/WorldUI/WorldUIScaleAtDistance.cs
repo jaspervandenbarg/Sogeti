@@ -27,7 +27,7 @@ namespace Sogeti.UI.WorldUI
         public void SetScaleAtDistance(Vector3 distance)
         {
             // log scale factor
-            float distanceValue = Mathf.Min(CalculateDistance(distance), 1);
+            float distanceValue = Mathf.Max(CalculateDistance(distance), 1);
             float calculatedScale = Mathf.Log(distanceValue + 1) * scaleFactor + distanceScaleOffset;
             float scale = Mathf.Max(calculatedScale, baseScale);
             transform.localScale = new Vector3(scale, scale, scale);
