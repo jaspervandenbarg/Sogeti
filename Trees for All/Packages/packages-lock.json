@@ -97,6 +97,13 @@
       "dependencies": {},
       "url": "https://packages.unity.com"
     },
+    "com.unity-atoms.unity-atoms": {
+      "version": "https://github.com/unity-atoms/unity-atoms.git",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "c3ac88cb226f23bf237226c9a04932ef74c055f2"
+    },
     "com.unity.ai.navigation": {
       "version": "2.0.14",
       "depth": 0,
