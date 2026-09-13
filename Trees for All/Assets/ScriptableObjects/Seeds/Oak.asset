@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8bc52a6d838e4d52b47ed73249893aaa, type: 3}
+  m_Name: Oak
+  m_EditorClassIdentifier: Sogeti.Planting::Sogeti.Planting.SeedDefinition
+  displayName: Oak
+  menuIcon: {fileID: 0}
+  stages:
+  - visualPrefab: {fileID: 8342448983144309027, guid: fcab16f0d26cd82dab4e96bf1ef5ecc5, type: 3}
+    deathVisualPrefab: {fileID: 0}
+    visualScale: 1
+    secondsToEmpty: 30
+    pointsForNextStage: 20
+    pointsGraceSeconds: 10
+    pointsDecaySeconds: 30
+    minimumPointsFraction: 0.25
+  - visualPrefab: {fileID: 6527066514930576640, guid: 4a5c3f58cf4a9055693572e2fb1af5aa, type: 3}
+    deathVisualPrefab: {fileID: 0}
+    visualScale: 1
+    secondsToEmpty: 45
+    pointsForNextStage: 40
+    pointsGraceSeconds: 15
+    pointsDecaySeconds: 45
+    minimumPointsFraction: 0.25
+  - visualPrefab: {fileID: 4586183935837940532, guid: 3f7dd0e9bb47425f3b6515ab77926eb2, type: 3}
+    deathVisualPrefab: {fileID: 7825190487421419863, guid: f45f80d80cecde8479d856266aa043f6, type: 3}
+    visualScale: 1
+    secondsToEmpty: 0
+    pointsForNextStage: 0
+    pointsGraceSeconds: 0
+    pointsDecaySeconds: 0
+    minimumPointsFraction: 0.25
+  defaultDeathVisualPrefab: {fileID: 9048257361043090810, guid: d64eab04e12df5469b30e8a2cb88a633, type: 3}
+  pointsForPlanting: 10
+  waterFillPerSecond: 0.25
+  minimumSpacingToSameType: 3
+  minimumSpacingToOtherTypes: 1.5

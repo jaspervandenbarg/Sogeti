@@ -76,8 +76,9 @@ The candidate decides:
 - State each design decision as a short code comment near the relevant
   code. Keep the assignment's own intent (show design reasoning) but
   follow this repo's comment style: one line, state the why, not the what.
-- List any external asset source in the root `README.md` when the asset
-  is not part of the default Unity template or an installed package.
+- List any external asset source in `README.md` when the asset is not part
+  of the default Unity template or an installed package. That file sits at
+  the git root, one level above this Unity folder. See `## Repo layout`.
 
 ## Layer conventions
 Unity physics layers decide what a gameplay ray can hit. XRI interaction layers
@@ -105,6 +106,17 @@ Rules:
 - Pass `QueryTriggerInteraction.Ignore` in every gameplay raycast.
   `Physics.queriesHitTriggers` is on, and the pond refill trigger overlaps the
   ground.
+
+## Repo layout
+The git root is one level above this Unity project.
+
+```
+Sogeti/                 <- git root, .gitignore, README.md, assignment PDF
+└─ Trees for All/       <- Unity project, this AGENTS.md, Assets/, Packages/
+```
+
+`README.md` and `Opdrachtomschrijving XR developer Sogeti.pdf` are at the git
+root, not next to `Assets/`.
 
 ## Repo conventions
 - Put new gameplay scripts under `/Assets/Scripts/`.
@@ -176,72 +188,55 @@ Rules:
 - - Show Restart button
 
 ## Next Step Claude progress (overwrite when finished)
-**Build the seed and tree growth data model.**
+**Build planting: place a seed on the terrain with the pointer.**
 
-Teleport is finished. The user verifies it. Do not re-plan teleport unless the
-user reports a failed check.
-
-Steps 3 to 7 of the backlog all read this model. Build it before any UI or
-planting code, or both get rewritten.
+The seed and tree data model is done. `Sogeti.Planting` holds `SeedDefinition`,
+`GrowthStage`, `PlantGrowth`, and `GrowthPoints`. Do not re-plan that model.
 
 ### Goal
-A seed type is data, not code. A third seed type must need zero code changes.
-The growth and water logic must be testable on PC without a headset.
+The player aims at the terrain, sees whether the spot is legal, and plants a
+seed there. The spot rules come from the `SeedDefinition` asset, not from code.
 
 ### Decisions already made, do not re-open
 - ScriptableObjects hold **data**. Plain C# events carry **state changes**.
 - Unity Atoms stays at its current scope, the camera position feeding the world
-  space UI. A shared score or timer Atom is static global state. Per tree water
-  in an Atom needs one runtime instance per tree.
-- Growth stages are a serialized array on the definition, never an enum.
-- Polygon Trees ships grass, shrub, tree, and dry variants. Stages and death are
-  prefab swaps. No new art needed.
+  space UI. A shared score or timer Atom is static global state.
 - Planting is an allow list on `Terrain`. See `## Layer conventions`.
-- Planted trees take layer `UniversalObstacle`, so one `Physics.OverlapSphere`
-  answers both "is a rock here" and "is another tree too close".
-
-### Ask the user first
-1. Real seconds per stage, and the watering rate. The backlog leaves timing open.
-2. The points decay shape. Linear to a floor, or a grace period then decay.
-3. Which Polygon Trees prefabs map to stages 1, 2, and 3 per seed type, and which
-   dry variant is the dead prefab.
-4. Two seed types is the assignment minimum. Confirm two, or more.
+- Planted plants take layer `UniversalObstacle`, so one `Physics.OverlapSphere`
+  answers both "is a rock here" and "is another plant too close".
+- Pass `QueryTriggerInteraction.Ignore` in every gameplay raycast.
+- **The plant root owns the collider, the layer, and the water meter UI. The
+  stage prefab is a child visual only.** Growth swaps the child. Polygon Trees
+  grass prefabs ship with no collider, so a stage prefab cannot be the root.
+- Spacing between two seed types is `SeedDefinition.RequiredSpacingTo(other)`.
+  It takes the larger of the two demands. Do not recompute it at the call site,
+  or planting order changes the answer.
+- `SeedDefinition.LargestSpacing` is the `OverlapSphere` radius.
 
 ### Build
 Runtime code in `Assets/Scripts/Planting/`, namespace `Sogeti.Planting`.
 
-1. `GrowthStage`, a `[Serializable]` class, not its own asset. Holds the stage
-   prefab, the seconds the water meter takes to empty, and the base points for
-   reaching the stage.
-2. `SeedDefinition`, a ScriptableObject. Holds display name, menu icon, the
-   growth stage array, the dead prefab, minimum spacing to the same seed type,
-   and minimum spacing to other types.
-3. A pure C# water meter and stage machine. No `MonoBehaviour`, no `UnityEngine`
-   timing calls. It takes delta time as an argument. Rules from the backlog: the
-   meter starts at 50% on every stage except the last, empty kills the plant,
-   full advances the stage, and the last stage has no meter.
-4. Points decay with elapsed time. Later stages are worth more. The backlog
-   example is 10, 20, 40.
-5. EditMode tests under `Assets/Tests/`. This is the one part of the game that is
-   fully verifiable with no headset, so cover it properly: drain to death, fill
-   to advance, the 50% reset, no meter on the last stage, and the points decay.
-   `com.unity.test-framework` 1.6.0 is installed.
+1. `Plant`, a `MonoBehaviour` on the plant root. It owns a `PlantGrowth` from
+   `SeedDefinition.CreateGrowth()`, calls `Tick` in `Update`, and swaps the
+   child visual on `StageAdvanced` and `Died`. Apply `GrowthStage.VisualScale`.
+2. A plant root prefab: collider, layer `UniversalObstacle`, empty visual
+   anchor child. One prefab serves every seed type.
+3. A placement validator. It refuses a hit that is not on `Terrain`, and refuses
+   a spot inside the required spacing of an existing plant.
+4. A planting interactor driven by the XRI ray, plus a ghost preview that shows
+   legal in one colour and blocked in another.
 
-`Assets/Scripts/` has no asmdef, and the tests need one to reference runtime
-code. Add an asmdef for the runtime code and one for the tests.
-
-### The user does this in the Editor afterwards
-Create one `SeedDefinition` asset per seed type under
-`Assets/ScriptableObjects/Seeds/`. Assign the stage prefabs, the dead prefab, the
-icon, and the spacing values.
+### Ask the user first
+1. Does the player plant from the same ray that teleports, or a separate mode?
+2. Does a blocked spot refuse silently, or show a reason?
 
 ### Done when
-EditMode tests pass in the Test Runner, and two `SeedDefinition` assets exist with
-prefabs assigned. This step needs no scene work.
+The player plants a seed on the terrain in Play Mode with the XR Device
+Simulator, cannot plant on water, rock, or pond, and cannot plant too close to
+an existing plant. Verify with the key table under `### PC test setup`.
 
 ### Not in this step
-The planting pointer, the ghost preview, the tool menu, the watering can, the
-score display, and the timer. Data and logic only.
+The tool menu, the watering can, the score display, the timer, the intro UI.
 
 ## Progress
 Update this section at the end of every step. Keep one line per step.
@@ -256,15 +251,61 @@ watering can, scoring, timer and end screen, intro UI.
 
 ### Status
 - **Teleport: config done, unverified.** Scene, rig, world, and project settings
-  are set. Play Mode verification is open. See `## Next Step`.
-- Seed and tree data model: not started.
-- Planting: not started.
-- Growth stages and water meter: not started.
+  are set. Play Mode verification is open.
+- **Seed and tree data model: done.** See `### Seed data model step, done`.
+- Planting: not started. See `## Next Step`.
+- Growth stages and water meter: logic done in `PlantGrowth`. The scene side,
+  the visual swap and the meter UI, is not started.
 - Tool and seed menu: not started.
 - Watering can: not started.
 - Scoring: not started.
 - Timer and end screen: not started.
 - Intro UI: not started.
+
+### Seed data model step, done
+Runtime code in `Assets/Scripts/Planting/`, assembly `Sogeti.Planting`.
+
+- `GrowthStage`, a `[Serializable]` class. One stage owns its drain speed, the
+  award for **leaving** it, and that award's grace, ramp, and floor. Every field
+  reads against the same clock, the time spent inside that one stage.
+- `SeedDefinition`, a ScriptableObject. `Create > Trees for All > Seed
+  Definition`. A new seed type needs an asset, never code.
+- `PlantGrowth`, a pure C# water meter and stage machine. It takes delta time as
+  an argument, so it is fully testable on PC with no headset.
+- `GrowthPoints`, static and stateless. Full points inside the grace window,
+  then linear to a floor, then flat.
+- Four seed assets in `Assets/ScriptableObjects/Seeds/`: Oak, Pine, Blossom,
+  Broadleaf. Stage 1 and 2 art repeats across types on purpose. Polygon Trees
+  ships 2 grass and 3 shrub prefabs, and a sprout gives away no species.
+- `menuIcon` is empty on all four. The tool menu step fills it.
+
+Rules that later steps must not re-derive:
+- The meter opens at 50% on every stage except the last. Empty kills, full
+  advances, the last stage has no meter.
+- `Tick` advances at most one stage and kills at most once per call. A frame
+  hitch must not gift a stage.
+- Death visuals resolve stage override first, then
+  `defaultDeathVisualPrefab`. Polygon Trees has no dead grass and no dead shrub,
+  so stages 1 and 2 share `dryBranches` and only stage 3 gets a dry tree.
+- `waterFlow01` on `Tick` is a 0 to 1 throttle, not a rate. The plant owns its
+  fill rate, so a watering can cannot change how fast every seed type grows.
+- Tuning lives in the assets: 30 s then 45 s to empty, 10 points for planting,
+  then 20 and 40. The meter opens half full, so the real neglect deadline is
+  15 s and 22.5 s.
+
+Tests: `Assets/Tests/EditMode/`, assembly `Sogeti.Planting.Tests`, 84 cases.
+
+`Assets/Scripts/Planting/` holds the only asmdef in `Assets/`. EditMode tests
+force it, for two Unity rules:
+- An asmdef cannot reference `Assembly-CSharp`. Unity forbids referencing the
+  predefined assemblies, so a test asmdef cannot see code that stays there.
+- `Assembly-CSharp-Editor` references neither `nunit.framework` nor
+  `UnityEngine.TestRunner`, so tests cannot live there either.
+
+The asmdef needs no references, and `autoReferenced` keeps `Assembly-CSharp`
+compiling as before. Give new gameplay code its own asmdef only when it also
+needs tests. A wide asmdef over all of `Assets/Scripts/` would have to list
+Unity Atoms, and then every future package by hand.
 
 ### Teleport step, done
 - `Assets/Prefabs/Player/PlayerRig.prefab` is a prefab variant of the Starter
