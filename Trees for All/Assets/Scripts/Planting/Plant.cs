@@ -12,8 +12,21 @@ namespace Sogeti.Planting
     [DisallowMultipleComponent]
     public class Plant : MonoBehaviour
     {
+        // Layer 2 Ignore Raycast sits outside the planting occluder mask, the planting
+        // blocker mask and the teleport mask, and the player camera still draws it.
+        private const int IgnoreRaycastLayer = 2;
+
         [SerializeField]
         private Transform visualAnchor;
+
+        [Header("Death")]
+        [SerializeField]
+        [Tooltip("Tick to keep a dead plant refusing nearby spots. The value applies at death, so restart Play Mode after a change.")]
+        private bool blocksPlacementWhenDead;
+
+        [SerializeField]
+        [Tooltip("Layer a dead plant moves to when it stops blocking.")]
+        private int deadPlantLayer = IgnoreRaycastLayer;
 
         private SeedDefinition seed;
         private PlantGrowth growth;
@@ -110,7 +123,36 @@ namespace Sogeti.Planting
         private void OnDied(int stageIndex)
         {
             ShowVisual(seed.GetDeathVisualPrefab(stageIndex), StageScale(stageIndex));
+
+            if (!blocksPlacementWhenDead)
+            {
+                MoveToDeadLayer();
+            }
+
             Died?.Invoke(this);
+        }
+
+        /// <summary>
+        /// Frees the spot a dead plant stands on.
+        /// The planting ray stops on any collider inside its occluder mask, so a husk
+        /// on the plant layer refuses its own spot before any spacing rule runs. The
+        /// teleport mask covers the same layers, so a freed husk also stops blocking
+        /// teleport. A dead stage 1 or stage 2 plant is grass or a shrub, so that reads fine.
+        /// </summary>
+        private void MoveToDeadLayer()
+        {
+            // The death visual is already a child, and it can carry its own colliders on layer 0.
+            SetLayerRecursively(transform, Mathf.Clamp(deadPlantLayer, 0, 31));
+        }
+
+        private static void SetLayerRecursively(Transform root, int layer)
+        {
+            root.gameObject.layer = layer;
+
+            for (int i = 0; i < root.childCount; i++)
+            {
+                SetLayerRecursively(root.GetChild(i), layer);
+            }
         }
 
         private void ShowStageVisual(int stageIndex)

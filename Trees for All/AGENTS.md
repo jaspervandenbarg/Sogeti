@@ -17,9 +17,9 @@ and grows trees inside a limited play space.
 - Repo host: GitHub
 - Company name: `Sogeti`
 
-Teleport and planting work in Play Mode. Plants grow and die, but nothing on
-screen shows the growth yet. See `## Progress` at the end of this file for the
-current state.
+Teleport and planting work in Play Mode. Each plant now carries a water meter.
+The meter compiles and its rules are tested, but nobody has run it in Play Mode
+yet. See `## Progress` at the end of this file for the current state.
 
 - Work scene: `Assets/Scenes/DevelopmentScene.unity`.
 - Player rig: `Assets/Prefabs/Player/PlayerRig.prefab`, a prefab variant of the
@@ -92,6 +92,7 @@ not mix the two.
 
 | Layer | Meaning | Blocks teleport | Blocks planting |
 | --- | --- | --- | --- |
+| 2 `Ignore Raycast` | World space UI that must never stop a ray. The water meter. Also the layer a dead plant moves to. | no | no |
 | 3 `Terrain` | The only surface to stand on and plant on. Carries the `TeleportationArea`. | no, it is the target | no |
 | 4 `Water` | Visual water and the watering can refill trigger. Colliders here are triggers. | no, the pond body blocks instead | yes |
 | 6 `PlayerObstacle` | Blocks the player only. Pond body, boundary walls. | yes | no |
@@ -108,6 +109,12 @@ Rules:
 - Obstacles carry no XRI interactable component.
 - Planting is an allow list on `Terrain`. Refuse any other hit. This covers
   water, rocks, and the pond body with one rule.
+- The teleport raycast mask and the planting `occluderMask` cover the same layers.
+  `occluderMask` is 233 and the teleport mask is 2147483881, which is 233 plus the
+  XR Simulation bit. No layer blocks the player and passes the planting ray.
+- The player camera culls layer 8 `Overlay UI`. The scene overrides the culling
+  mask to 4294967039. Only an `OVROverlayCanvas` draws there. World UI the camera
+  must draw belongs on layer 2.
 - Pass `QueryTriggerInteraction.Ignore` in every gameplay raycast.
   `Physics.queriesHitTriggers` is on, and the pond refill trigger overlaps the
   ground.
@@ -158,6 +165,7 @@ root, not next to `Assets/`.
 ## Comment / Documentation style
 - Write comments that explain "why". A few high level comments explaining the purpose of classes or methods is very helpful. Comments explaining tricky code are also helpful.
 - Avoid comments that are redundant with the code. Do not comment before each line of code explaining what it does unless there is something that is not obvious going on.
+- Don't mention yourself or agents.md in commit messages
 
 ## Things to avoid
 - Don't add third-party assets without asking.
@@ -223,39 +231,33 @@ Put a new rule in layer 2, where a test can reach it without a headset.
 - - Show Restart button
 
 ## Next Step Claude progress (overwrite when finished)
-**Show growth in the scene: the water meter UI above each plant.**
+**The watering can: let the player put water back into a plant.**
 
-Planting is built and verified. `Plant` already swaps the stage visual and the
-death visual, so a neglected seed does turn into dry branches on screen. The
-player just cannot see it coming. Do not re-plan the growth rules, they live in
-`PlantGrowth` and are tested.
+Every plant dies today, because nothing adds water. `Plant.ApplyWaterFlow` is
+built and waits for a caller. Do not re-plan the growth rules or the meter.
 
 ### Goal
-The player reads, at a glance, which plant needs water and how urgent it is.
+The player tilts a can over a plant, and the meter rises instead of draining.
 
 ### Decisions already made, do not re-open
-- The meter belongs to the plant root, not to the stage prefab.
-- `Plant.HasWaterMeter` is the only switch. A dead or fully grown plant hides it.
-- The meter faces the player on the yaw axis only. Tilting world space UI
-  towards the headset reads as unstable in VR. Copy `PlantingPreview`.
-- `Plant` exposes `Water01`. The meter reads it. It never owns the number.
-
-### Build
-1. A `PlantWaterMeter` component under `Assets/Scripts/UI/WorldUI/`.
-2. A meter prefab, parented to the `Plant` prefab root, above the visual anchor.
-3. Colour the fill by urgency, so a dying plant reads from across the field.
+- `Plant.ApplyWaterFlow(float flow01)` is the only entry point. The value is a
+  throttle from 0 to 1, not a rate. The seed owns the fill rate.
+- The player tilts the can to pour. A button does not teach the action.
+- The pond refill trigger is layer 4 `Water` and already sits in `World.prefab`.
 
 ### Ask the user first
-1. Does every plant show a meter always, or only inside a look or aim range?
-2. Does a dead plant stay in the world, or fade out after a few seconds?
+1. Does the can hold a limited charge, or does it pour forever?
+2. Does the player grab the can, or does the can attach to the left hand?
+
+### Watch out
+- The right trigger is shared. See `### Known issues, parked`. The planter and
+  the Near-Far Interactor both read `Activate`. A grabbable can makes them clash.
 
 ### Done when
-The player plants a seed and watches the meter drain, so the death at 15 s is
-readable in advance instead of a surprise. Verify in Play Mode with the
-simulator.
+A watered seed reaches stage 2 and its meter refills. Verify in Play Mode.
 
 ### Not in this step
-The watering can, the tool menu, the score display, the timer, the intro UI.
+The tool menu, the score display, the timer, the intro UI.
 
 ## Progress
 Update this section at the end of every step. Keep one line per step.
@@ -274,13 +276,77 @@ watering can, scoring, timer and end screen, intro UI.
   passed.
 - **Seed and tree data model: done.** See `### Seed data model step, done`.
 - **Planting: done, verified in Play Mode.** See `### Planting step, done`.
-- Growth stages: `Plant` swaps the stage visual and the death visual, verified
-  in Play Mode. The water meter UI is not started. See `## Next Step`.
+- **Growth stages: built, EditMode tests pass, Play Mode run still open.** The
+  stage visual and the death visual were verified earlier. The water meter is
+  new and unverified. See `### Water meter step, built`.
 - Tool and seed menu: not started.
 - Watering can: not started.
 - Scoring: not started.
 - Timer and end screen: not started.
 - Intro UI: not started.
+
+### Water meter step, built
+A bar and a droplet float above every living plant. Code in
+`Assets/Scripts/Planting/` and `Assets/Scripts/UI/WorldUI/`.
+
+Design answers from the user:
+- **Range gated.** A meter shows inside 15 m and hides past 16 m. Two distances,
+  because one threshold flickers while the player stands on the edge.
+- **A dead plant stays visible and stops blocking.** Tick
+  `Plant.blocksPlacementWhenDead` to get the old behaviour and compare the two.
+- **A bar plus a droplet.** The droplet pulses on the critical band only.
+
+New types:
+- `WaterUrgency`, an enum with `Healthy`, `Low` and `Critical`.
+- `WaterUrgencyBands`, static and pure. It maps `Water01` to a band.
+- `PlantWaterMeter`, the scene component. It reads `Plant.Water01` and
+  `Plant.HasWaterMeter`. It owns neither.
+
+New assets:
+- `Assets/Prefabs/Plants/Plant.prefab` gains a `WaterMeter` child on the root,
+  a sibling of `Visual`. Every stage swap destroys the contents of `Visual`.
+- `Assets/Materials/UI/`, five URP Unlit materials. All have `_Cull` off.
+- `Assets/Textures/UI/Droplet.png`, project placeholder art, not third party.
+
+Rules that later steps must not re-derive:
+- **The player camera culls layer 8.** A meter there renders nowhere. Layer 2 is
+  the one layer the camera draws that no gameplay mask reads. See
+  `## Layer conventions`.
+- **A spacing rule alone cannot free a dead plant's spot.** The plant capsule is
+  layer 7, and layer 7 sits inside `occluderMask`. The planting ray is refused
+  before `PlantingRules.CheckSpacing` runs. `Plant` moves the whole hierarchy to
+  layer 2 on death instead. `NeighbourPlant` and `PlantingRules` stay unchanged.
+- The same move stops the husk blocking teleport. The two masks are the same
+  layers, so no layer separates the two cases.
+- The toggle applies at death. Restart Play Mode after you change it.
+- `WorldUILookAtPlayer` runs the billboard. `rotationOffset` is `0, 180, 0`, so
+  the quad front faces the player and the bar does not drain the wrong way.
+- The fill swaps `sharedMaterial` per band. A `MaterialPropertyBlock` would drop
+  the renderer out of the SRP batcher, one extra draw call per plant.
+- `PlantWaterMeter` reads the `CameraPosition` atom, not `Camera.main`. It skips
+  the first frame, while the atom still holds the origin.
+- Stage 3 has no meter, so the meter only ever sits above grass or a shrub. A
+  fixed height of 1.2 m clears both.
+
+Tests: `Assets/Tests/EditMode/WaterUrgencyBandsTests.cs`, 16 new cases. 135 total.
+
+**Not verified in Play Mode.** The code compiles against the Unity 6000.3.24f1
+assemblies, and the pure rules pass outside Unity. Nobody has pressed Play.
+
+### Water meter step, what to check
+Run these before you call the step done.
+
+1. **The meter appears.** Plant a seed. A bar and a droplet sit above it.
+2. **The meter drains.** The bar shrinks. The colour runs green, amber, red. The
+   droplet pulses on red. The plant dies at about 15 s.
+3. **The meter hides on death.** The dry branches stay. No bar remains.
+4. **Range works.** Teleport away. The bar hides past 16 m and returns inside 15 m.
+5. **The bar faces the player and drains right to left.** Walk a circle. A
+   mirrored bar means `rotationOffset` is wrong.
+6. **A dead plant frees its spot.** Aim at the dry branches. The ghost turns green.
+7. **The toggle works.** Tick `blocksPlacementWhenDead` on `Plant.prefab`, restart
+   Play Mode, and the husk refuses a close spot again.
+8. **Nothing regressed.** Re-run `### Planting step, what "verified" means`.
 
 ### Planting step, done
 Runtime code in `Assets/Scripts/Planting/` and `Assets/Scripts/Interaction/`.

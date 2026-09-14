@@ -1038,12 +1038,20 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 0}
     - target: {fileID: 1361920850138660754, guid: 49c135c5866e7b64d861e49f959f8421, type: 3}
+      propertyPath: m_SmoothTurnEnabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1361920850138660754, guid: 49c135c5866e7b64d861e49f959f8421, type: 3}
       propertyPath: m_TeleportInteractor
       value: 
       objectReference: {fileID: 0}
     - target: {fileID: 1361920850138660754, guid: 49c135c5866e7b64d861e49f959f8421, type: 3}
       propertyPath: m_TeleportModeCancel
       value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 1361920850138660754, guid: 49c135c5866e7b64d861e49f959f8421, type: 3}
+      propertyPath: m_SmoothMotionEnabled
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2832378035274495500, guid: 49c135c5866e7b64d861e49f959f8421, type: 3}
       propertyPath: m_InteractionManager

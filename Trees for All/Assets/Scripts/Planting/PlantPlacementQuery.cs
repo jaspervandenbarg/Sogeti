@@ -24,6 +24,7 @@ namespace Sogeti.Planting
         private readonly float obstacleClearance;
 
         private IReadOnlyList<SeedDefinition> seedCatalog;
+        private bool warnedAboutFullBuffer;
 
         /// <param name="occluderMask">Everything the ray can stop on. Refusing a spot needs the nearest hit, not the nearest legal hit.</param>
         /// <param name="plantableMask">The allow list. Only these layers accept a seed.</param>
@@ -85,6 +86,8 @@ namespace Sogeti.Planting
                 blockerMask,
                 QueryTriggerInteraction.Ignore);
 
+            WarnOnceIfBufferIsFull(found);
+
             for (int i = 0; i < found; i++)
             {
                 Collider collider = overlapBuffer[i];
@@ -108,6 +111,19 @@ namespace Sogeti.Planting
             }
 
             return PlantingRules.CheckSpacing(seed, point, normal, neighbours);
+        }
+
+        // A full buffer drops colliders, and a dropped neighbour lets a seed land too close.
+        // Once per query object is enough. This runs every frame while the player aims.
+        private void WarnOnceIfBufferIsFull(int found)
+        {
+            if (found < MaxNeighbours || warnedAboutFullBuffer)
+            {
+                return;
+            }
+
+            warnedAboutFullBuffer = true;
+            Debug.LogWarning($"Planting found {MaxNeighbours} colliders, the buffer cap. A neighbour may be missed.");
         }
     }
 }
