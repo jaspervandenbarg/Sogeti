@@ -157,18 +157,35 @@ namespace Sogeti.UI.ToolMenu
             OpenChanged?.Invoke(IsOpen);
         }
 
-        /// <summary>The rows build on their first activation, so the marks are set after the panel shows.</summary>
+        /// <summary>Repaints both rows from the hand. The rows build on their first activation, so this also runs on open.</summary>
         private void RefreshSelection()
         {
-            if (seedRow != null && planter != null)
-            {
-                seedRow.SetSelected(planter.SelectedSeed);
-            }
-
             if (toolRow != null && toolSwitch != null)
             {
                 toolRow.SetSelected(toolSwitch.ActiveIndex);
             }
+
+            if (seedRow != null)
+            {
+                seedRow.SetSelected(SeedOnShow());
+            }
+        }
+
+        // The seed row speaks for the planter alone, so picking the can leaves it dark.
+        // The planter keeps its seed, so coming back restores the same one.
+        private SeedDefinition SeedOnShow()
+        {
+            if (planter == null)
+            {
+                return null;
+            }
+
+            if (toolSwitch != null && toolSwitch.ActiveIndex != planterToolIndex)
+            {
+                return null;
+            }
+
+            return planter.SelectedSeed;
         }
 
         private void OnSeedChosen(SeedDefinition seed)
@@ -193,20 +210,8 @@ namespace Sogeti.UI.ToolMenu
             }
         }
 
-        private void OnSeedChanged(SeedDefinition seed)
-        {
-            if (seedRow != null)
-            {
-                seedRow.SetSelected(seed);
-            }
-        }
+        private void OnSeedChanged(SeedDefinition seed) => RefreshSelection();
 
-        private void OnToolChanged(int toolIndex, GameObject tool)
-        {
-            if (toolRow != null)
-            {
-                toolRow.SetSelected(toolIndex);
-            }
-        }
+        private void OnToolChanged(int toolIndex, GameObject tool) => RefreshSelection();
     }
 }

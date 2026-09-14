@@ -258,6 +258,9 @@ Nothing is verified in Play Mode.
 - **A seed readout on the right hand.** No tool readout. The player already sees
   the planter or the can.
 - **The panel stays open until Y.** A pick does not close it.
+- **One mark at a time.** The hand holds one tool, so the panel lights one entry.
+  The seed row speaks for the planter alone and goes dark while the can is out.
+  `SelectedSeed` survives, so returning to the planter restores the same seed.
 - **Jump is off.** The menu removed the B button, which left B on Jump. The game
   is teleport only for comfort.
 
@@ -284,20 +287,30 @@ Nothing is verified in Play Mode.
    Input Module`, do not disable it. Add `XR UI Input Module`. Leave its action
    fields empty, so the built in mouse fallback stays on. Without this module the
    `m_EnableUIInteraction` flag on both interactors does nothing, and the panel
-   reads as dead with no error.
+   reads as dead with no error. DONE
 2. Parent `ToolMenu` under `PlayerRig > Camera Offset > Left Controller`. Start
    at local position `(0.02, 0.07, -0.05)`, rotation `(50, 180, 0)`. Tune until
-   the panel faces the head. Keep `panelRoot` inactive.
+   the panel faces the head. Keep `panelRoot` inactive. DONE
 3. Set `toolSwitch` and `planter` on `ToolMenuController`. Both sit on the Right
-   Controller, outside the menu prefab, so these two stay instance overrides.
+   Controller, outside the menu prefab, so these two stay instance overrides. DONE
 4. Add a `SeedReadout` child to `SeedPlanter.prefab` with `SelectedSeedReadout`.
-   Clear `raycastTarget` on both graphics. Fixed rotation, no billboard.
-5. Run `Trees for All/Bake Seed Icons`. Check the import settings.
-6. Replace the placeholder sprite on the Water entry icon.
-7. Run the EditMode suite. 160 cases must pass.
-8. List the baked icons in the root `README.md`.
+   Clear `raycastTarget` on both graphics. Fixed rotation, no billboard. DONE
+5. Run `Trees for All/Bake Seed Icons`. Check the import settings. DONE
+6. Replace the placeholder sprite on the Water entry icon. DONE
+7. Run the EditMode suite. 160 cases must pass. DONE
+8. List the baked icons in the root `README.md`. DONE
+9. Re-run `Trees for All/Bake Seed Icons`. The first bake wrote magenta. OPEN
 
 ### Watch out
+- **`PreviewRenderUtility.Render()` defaults to the built-in pipeline.** The
+  first argument is `allowScriptableRenderPipeline` and it defaults to false.
+  URP shaders tag their SubShaders `"RenderPipeline" = "UniversalPipeline"`, so
+  nothing matches and Unity draws the magenta error shader over correct
+  geometry. `SeedIconBaker` passes `true`. Never drop that argument.
+- **The tool row entries carry authored art, the seed row does not.**
+  `SeedMenuRow` builds its entries from the catalog and calls `SetContent`.
+  `ToolMenuRow` reuses entries placed in `ToolMenu.prefab`, so a tool icon is a
+  prefab instance override on the entry's `Icon` image, not a code assignment.
 - Use a plain parented transform. `HandMenu` needs a palm up pose, which the PC
   simulator cannot hold. `LazyFollow` adds a tween, which blurs a pass or fail.
 - The rows build on their first activation, so `ToolMenuController` refreshes the

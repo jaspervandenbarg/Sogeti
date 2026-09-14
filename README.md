@@ -12,13 +12,19 @@ Test the game on PC with a mouse and keyboard. No headset is needed.
 3. Hold `W` to raise the arc. Release `W` to teleport.
 4. Press `1` again to walk.
 
+**Pick a tool or a seed**
+1. Press `T`, then `N`, to open the menu on the left wrist.
+2. Press `Y` to aim the right hand ray. Click an entry to pick it.
+3. The menu marks one entry at a time, because the hand holds one tool at a time.
+4. Press `N` again to close the menu.
+
 **Plant a seed**
 1. Press `Y` to aim the seed ray.
 2. Aim at green ground. Click the left mouse button to plant.
 3. Red ground blocks planting. Read the label for the reason.
 
 **Water a plant**
-1. Press `B` to switch to the watering can.
+1. Pick the watering can from the menu.
 2. Hold `Left Ctrl` and move the mouse to tilt the can over a plant.
 3. Tilt past 45 degrees to pour.
 4. Dip the spout in the pond to refill the can.
@@ -35,3 +41,13 @@ Test the game on PC with a mouse and keyboard. No headset is needed.
 - - https://assetstore.unity.com/packages/3d/vegetation/trees/polygon-trees-224068
 - Garden realistic tools: the watering can model
 - - https://assetstore.unity.com/packages/3d/props/tools/garden-realistic-tools-68960
+
+## Project art
+Made for this project, not third party.
+
+- `Assets/Textures/UI/Droplet.png`: the water meter droplet.
+- `Assets/Textures/UI/SeedIcons/`: one menu icon per seed. Baked from the last
+  growth stage of each seed by `Trees for All/Bake Seed Icons`, so the art comes
+  from Polygon Trees above.
+- `Assets/Textures/UI/ToolIcons/ToolIconWateringCan.png`: the menu icon for the
+  watering can.

@@ -7,17 +7,27 @@ using UnityEngine;
 namespace Sogeti.Editor
 {
     /// <summary>
-    /// Renders one menu icon per seed from its last growth stage.
+    /// Renders menu icons from prefabs.
+    /// One icon per seed, taken from its last growth stage, plus one per tool.
     /// Stages 1 and 2 share art across seed types on purpose, so only the grown
     /// tree tells the four species apart. A baker also covers a fifth seed with
-    /// one menu click, which hand drawn art does not.
+    /// one menu click, which hand drawn art does not, and a baked tool icon
+    /// matches the seed icons for free.
     /// </summary>
     public static class SeedIconBaker
     {
-        private const string OutputFolder = "Assets/Textures/UI/SeedIcons";
+        private const string SeedFolder = "Assets/Textures/UI/SeedIcons";
+        private const string ToolFolder = "Assets/Textures/UI/ToolIcons";
+        private const string WateringCanPath = "Assets/GardenTools/Watering Can/WateringCanPrefab.prefab";
         private const int IconSize = 256;
 
         private static readonly Color Background = new Color(0.16f, 0.19f, 0.16f, 1f);
+
+        // A three quarter view separates a pine from an oak better than a flat side view.
+        private static readonly Quaternion SeedView = Quaternion.Euler(12f, 140f, 0f);
+
+        // The can reads best from the side, where the spout and the handle both show.
+        private static readonly Quaternion ToolView = Quaternion.Euler(14f, 55f, 0f);
 
         [MenuItem("Trees for All/Bake Seed Icons")]
         public static void BakeAll()
@@ -29,7 +39,7 @@ namespace Sogeti.Editor
                 return;
             }
 
-            Directory.CreateDirectory(OutputFolder);
+            Directory.CreateDirectory(SeedFolder);
 
             int baked = 0;
             try
@@ -51,7 +61,29 @@ namespace Sogeti.Editor
             }
 
             AssetDatabase.SaveAssets();
-            Debug.Log($"Seed icon baker: {baked} of {seeds.Count} icons written to {OutputFolder}.");
+            Debug.Log($"Seed icon baker: {baked} of {seeds.Count} icons written to {SeedFolder}.");
+        }
+
+        [MenuItem("Trees for All/Bake Tool Icons")]
+        public static void BakeTools()
+        {
+            GameObject can = AssetDatabase.LoadAssetAtPath<GameObject>(WateringCanPath);
+            if (can == null)
+            {
+                Debug.LogWarning($"Seed icon baker: no prefab at {WateringCanPath}.");
+                return;
+            }
+
+            Directory.CreateDirectory(ToolFolder);
+
+            string path = $"{ToolFolder}/ToolIconWateringCan.png";
+            if (BakePrefab(can, path, ToolView) == null)
+            {
+                return;
+            }
+
+            // Nothing assigns a tool sprite from code. The Water entry is wired in ToolMenu.prefab.
+            Debug.Log($"Seed icon baker: tool icon written to {path}.");
         }
 
         private static bool BakeOne(SeedDefinition seed)
@@ -63,21 +95,32 @@ namespace Sogeti.Editor
                 return false;
             }
 
-            Texture2D texture = Render(prefab);
-            if (texture == null)
+            Sprite sprite = BakePrefab(prefab, $"{SeedFolder}/SeedIcon{seed.name}.png", SeedView);
+            if (sprite == null)
             {
                 Debug.LogWarning($"Seed icon baker: {seed.name} rendered nothing.", seed);
                 return false;
             }
 
-            string path = $"{OutputFolder}/SeedIcon{seed.name}.png";
+            AssignIcon(seed, sprite);
+            return true;
+        }
+
+        /// <summary>Renders one prefab to a PNG at path and returns the imported sprite.</summary>
+        private static Sprite BakePrefab(GameObject prefab, string path, Quaternion view)
+        {
+            Texture2D texture = Render(prefab, view);
+            if (texture == null)
+            {
+                return null;
+            }
+
             File.WriteAllBytes(path, texture.EncodeToPNG());
             Object.DestroyImmediate(texture);
 
             AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);
             ApplySpriteSettings(path);
-            AssignIcon(seed, AssetDatabase.LoadAssetAtPath<Sprite>(path));
-            return true;
+            return AssetDatabase.LoadAssetAtPath<Sprite>(path);
         }
 
         private static GameObject LastStageVisual(SeedDefinition seed)
@@ -94,7 +137,7 @@ namespace Sogeti.Editor
             return null;
         }
 
-        private static Texture2D Render(GameObject prefab)
+        private static Texture2D Render(GameObject prefab, Quaternion view)
         {
             PreviewRenderUtility preview = new PreviewRenderUtility();
             GameObject instance = null;
@@ -109,10 +152,12 @@ namespace Sogeti.Editor
                 preview.AddSingleGO(instance);
 
                 Bounds bounds = MeshBounds(instance);
-                FrameCamera(preview.camera, bounds);
+                FrameCamera(preview.camera, bounds, view);
                 SetUpLights(preview);
 
-                preview.Render();
+                // URP materials have no built-in SubShader, so without the scriptable
+                // pipeline every one of them renders as the magenta error shader.
+                preview.Render(true);
                 return preview.EndStaticPreview();
             }
             finally
@@ -127,10 +172,8 @@ namespace Sogeti.Editor
         }
 
         // Qualified, because Sogeti.Camera is a namespace in this project.
-        private static void FrameCamera(UnityEngine.Camera camera, Bounds bounds)
+        private static void FrameCamera(UnityEngine.Camera camera, Bounds bounds, Quaternion rotation)
         {
-            // A three quarter view separates a pine from an oak better than a flat side view.
-            Quaternion rotation = Quaternion.Euler(12f, 140f, 0f);
             float radius = Mathf.Max(bounds.extents.magnitude, 0.1f);
 
             camera.orthographic = true;
