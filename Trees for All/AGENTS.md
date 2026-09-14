@@ -17,9 +17,9 @@ and grows trees inside a limited play space.
 - Repo host: GitHub
 - Company name: `Sogeti`
 
-Teleport, planting and the water meter work in Play Mode. The watering can is
-built and tested, but it is not wired into the rig yet. See `## Progress` at the
-end of this file for the current state.
+Teleport, planting, the water meter, and the watering can all work and are
+verified in Play Mode. See `## Progress` at the end of this file for the
+current state.
 
 - Work scene: `Assets/Scenes/DevelopmentScene.unity`.
 - Player rig: `Assets/Prefabs/Player/PlayerRig.prefab`, a prefab variant of the
@@ -284,14 +284,13 @@ watering can, scoring, timer and end screen, intro UI.
 
 ### Status
 - **Teleport: done, verified in Play Mode, left hand only.** The right hand
-  plants now. All 7 checks under `### Teleport step, what "verified" means`
-  passed.
+  plants now.
 - **Seed and tree data model: done.** See `### Seed data model step, done`.
 - **Planting: done, verified in Play Mode.** See `### Planting step, done`.
 - **Growth stages: done, verified in Play Mode.** The stage visual, the death
   visual and the water meter all passed. See `### Water meter step, built`.
-- **Watering can: built, EditMode tests pass, scene wiring and Play Mode run
-  still open.** See `### Watering can step, built`.
+- **Watering can: done, wired into the rig, verified in Play Mode.** See
+  `### Watering can step, built`.
 - Tool and seed menu: not started.
 - Scoring: not started.
 - Timer and end screen: not started.
@@ -341,48 +340,11 @@ Rules that later steps must not re-derive:
 Tests: `Assets/Tests/EditMode/PourFlowTests.cs` and `WaterTankTests.cs`,
 25 new cases. 160 total.
 
-**Not wired and not verified in Play Mode.** The scripts and the can prefab are
-done. The rig wiring is still open, see `### Watering can step, what to wire`.
-
-### Watering can step, what to wire
-The scene edit needs the Editor. The Right Controller lives in the Starter Assets
-rig, and its GameObject id is materialized in no readable file, so the wiring
-cannot be written into `DevelopmentScene.unity` by hand.
-
-1. Select `PlayerRig > Camera Offset > Right Controller`. Add
-   `RightHandToolSwitch`.
-2. Drag `Assets/GardenTools/Watering Can/WateringCanPrefab.prefab` onto that same
-   `Right Controller`. Place and rotate it until it reads as held. `Cube.001`
-   had a 2.8 m offset baked in. It is zeroed now, so check the can sits on the
-   root and move `Cube.001` if it does not.
-3. Fill the switch `tools` array. Element 0 the existing `SeedPlanter`, element 1
-   the can. Element 0 is the tool the hand starts with.
-4. On the switch, define the `switchAction` inline and bind it to
-   `<XRController>{RightHand}/{PrimaryButton}`.
-5. Move the can's `Spout` child to the mouth of the can.
-6. Add a `ParticleSystem` under `Spout` that emits down, URP `Particles/Unlit`,
-   and reuse `Assets/Textures/UI/Droplet.png`. Assign it to the can `stream`
-   field. The field is null guarded, so the can works without it.
-7. Set `tiltReference` to a transform whose up axis leaves the top of the can.
-   Leave it empty only if the can root already reads upright.
-8. Check the `Level` bar sits where the player can read it.
-
-### Watering can step, what to check
-Run these after the wiring, before you call the step done.
-
-1. **The tools swap.** Press `B`. The can appears and the planting ray and ghost
-   disappear. Press `B` again and planting returns.
-2. **Tilt pours.** Press `Y` to aim the right hand, hold `Left Ctrl` and move the
-   mouse to tilt. Past about 45 degrees water pours and the level drops.
-3. **A plant drinks.** Plant a seed, swap to the can, pour over it. The plant
-   meter rises and turns green. Keep pouring and the plant reaches stage 2.
-4. **The can runs dry.** Pour without stopping. The stream stops.
-5. **The pond refills.** Hold the spout in the pond. The level climbs to full.
-6. **The trigger option works.** Tick `requireTriggerToPour`. Tilt alone pours
-   nothing. Tilt plus left mouse pours.
-7. **Nothing regressed.** Re-run `### Planting step, what "verified" means` and
-   `### Water meter step, what to check`. The can must not block the planting ray
-   or the teleport ray.
+**Wired into the rig and verified in Play Mode.** `RightHandToolSwitch` sits on
+`PlayerRig > Camera Offset > Right Controller` with the `SeedPlanter` and the
+watering can in its `tools` array. Tool swap, tilt pour, plant drinking, the
+dry-out, and the pond refill all pass, with `requireTriggerToPour` ticked and
+unticked.
 
 ### Water meter step, built
 A bar and a droplet float above every living plant. Code in
@@ -429,23 +391,9 @@ Rules that later steps must not re-derive:
 
 Tests: `Assets/Tests/EditMode/WaterUrgencyBandsTests.cs`, 16 new cases. 135 total.
 
-**Not verified in Play Mode.** The code compiles against the Unity 6000.3.24f1
-assemblies, and the pure rules pass outside Unity. Nobody has pressed Play.
-
-### Water meter step, what to check
-Run these before you call the step done.
-
-1. **The meter appears.** Plant a seed. A bar and a droplet sit above it.
-2. **The meter drains.** The bar shrinks. The colour runs green, amber, red. The
-   droplet pulses on red. The plant dies at about 15 s.
-3. **The meter hides on death.** The dry branches stay. No bar remains.
-4. **Range works.** Teleport away. The bar hides past 16 m and returns inside 15 m.
-5. **The bar faces the player and drains right to left.** Walk a circle. A
-   mirrored bar means `rotationOffset` is wrong.
-6. **A dead plant frees its spot.** Aim at the dry branches. The ghost turns green.
-7. **The toggle works.** Tick `blocksPlacementWhenDead` on `Plant.prefab`, restart
-   Play Mode, and the husk refuses a close spot again.
-8. **Nothing regressed.** Re-run `### Planting step, what "verified" means`.
+**Verified in Play Mode.** The meter appears, drains through green/amber/red
+with the droplet pulse, hides on death, respects the 15/16 m range, faces the
+player, and the `blocksPlacementWhenDead` toggle behaves as designed.
 
 ### Planting step, done
 Runtime code in `Assets/Scripts/Planting/` and `Assets/Scripts/Interaction/`.
@@ -513,22 +461,6 @@ Four facts about the rig. A rebuilt rig loses all four.
 4. `Ray Origin` is empty on the planter, so it falls back to its own transform.
    Do not wire `Right Controller Teleport Stabilized Origin`. That stabilizer
    aims against the teleport interactor, which this hand no longer runs.
-
-### Planting step, what "verified" means
-The checks that closed the step. Re-run them if planting regresses.
-
-1. **Ghost follows the aim.** Press `Y`. A ghost plant tracks the hit point and
-   stands upright.
-2. **Legal ground accepts.** Aim at open ground. The ghost turns green. The
-   right trigger plants a tree that stays put.
-3. **Every refusal reads.** Aim at the pond, a rock, and a steep bank. The ghost
-   turns red and the label names the reason.
-4. **Spacing holds.** Aim within 3 m of a planted oak. The label reads "Oak is
-   too close". Aim past 4 m and it turns green again.
-5. **Neglect kills.** Plant a seed and wait 15 s. The visual swaps to dry
-   branches. There is no watering can yet, so every plant dies.
-6. **The hands stay split.** Press `T` then `1`. The left hand teleports. The
-   right hand still plants.
 
 ### Seed data model step, done
 Runtime code in `Assets/Scripts/Planting/`, assembly `Sogeti.Planting`.
@@ -598,28 +530,6 @@ Unity Atoms, and then every future package by hand.
    cannot reference a scene object.
 - The pond blocker top sits about 2 cm above the terrain. Setting `World > Pond`
    Box Collider Center Y to `-0.05` would add margin. Skipped, the gap works.
-
-### Teleport step, what "verified" means
-The checks that close the step. Re-run them if teleport regresses.
-
-1. **Camera height.** The horizon sits near 1.7 m. A floor level view means the
-   XR Simulation loader is active again on Standalone.
-2. **One simulator.** The Hierarchy shows exactly one simulator object.
-3. **Teleport works.** Aim at open ground about 5 m ahead. Expect a blue arc and
-   a ring reticle with a direction arrow. Release. The rig moves and stays upright.
-4. **Obstacles refuse.** Aim at a rock, then at the pond. Expect a red line and
-   no reticle. Releasing does not move you.
-5. **No teleport through an obstacle.** Put a rock between you and open ground.
-   Aim past it. The ray stops at the rock.
-6. **Slope filter.** Aim at the steepest bank. Expect red above about 30 degrees,
-   blue below. Raise the tolerance to 35 if gentle slopes read as invalid.
-7. **Debugger.** `Window > Analysis > XR Interaction Debugger`, Interactors tab.
-   Terrain lists the `World` TeleportationArea as a valid target. A rock lists
-   nothing.
-
-Demo worth recording: untick `PlayerObstacle` from the right Teleport Interactor
-raycast mask, then aim at the pond. The arc passes through and you land in the
-water. This shows why obstacles stay inside the mask. Re-tick it after.
 
 ### PC test setup
 No headset. Test with the classic **XR Device Simulator** in the scene.

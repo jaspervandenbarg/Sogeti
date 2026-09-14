@@ -2,6 +2,32 @@
 
 Please refer to the "Opdrachtomschrijving XR developer Sogeti.pdf" for the assignment.
 
+## How to play
+
+Test the game on PC with a mouse and keyboard. No headset is needed.
+
+**Move**
+1. Hold the right mouse button to look around.
+2. Press `T`, then `1`, to aim the teleport arc.
+3. Hold `W` to raise the arc. Release `W` to teleport.
+4. Press `1` again to walk.
+
+**Plant a seed**
+1. Press `Y` to aim the seed ray.
+2. Aim at green ground. Click the left mouse button to plant.
+3. Red ground blocks planting. Read the label for the reason.
+
+**Water a plant**
+1. Press `B` to switch to the watering can.
+2. Hold `Left Ctrl` and move the mouse to tilt the can over a plant.
+3. Tilt past 45 degrees to pour.
+4. Dip the spout in the pond to refill the can.
+
+**Goal**
+- Grow each plant through 3 stages.
+- Water a plant before its meter empties. An empty meter kills the plant.
+- Earn points for each stage a plant reaches. Score as many points as possible.
+
 ## Packages used:
 - Terrain Toolkit: tilled grass and rock textures
 - Unity Atoms: https://github.com/unity-atoms/unity-atoms.git
