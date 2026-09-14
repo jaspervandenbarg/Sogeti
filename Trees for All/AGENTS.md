@@ -1,5 +1,9 @@
 # AGENTS.md
 
+## Workload.
+- Allowed to auto switch to Opus 5 with 1m context when deemed necessary.
+- - Switch back to default after.
+
 ## Project
 "Trees for All" is a VR tree-planting game for Sogeti. The game reflects
 Sogeti's partnership with the Trees for All foundation. The player plants
@@ -13,8 +17,9 @@ and grows trees inside a limited play space.
 - Repo host: GitHub
 - Company name: `Sogeti`
 
-The scene and the player rig are set up. No gameplay code exists yet. See
-`## Progress` at the end of this file for the current state.
+Teleport and planting work in Play Mode. Plants grow and die, but nothing on
+screen shows the growth yet. See `## Progress` at the end of this file for the
+current state.
 
 - Work scene: `Assets/Scenes/DevelopmentScene.unity`.
 - Player rig: `Assets/Prefabs/Player/PlayerRig.prefab`, a prefab variant of the
@@ -161,6 +166,36 @@ root, not next to `Assets/`.
 - Static global state.
 - Quest-only APIs with no PC simulation path, unless isolated behind an interface (see testing constraint above).
 
+## High level architecture
+Keep this current. It saves a rediscovery pass at the start of the next session.
+
+### Assemblies
+- `Sogeti.Planting` (`Assets/Scripts/Planting/`) is the only asmdef in `Assets/`.
+  It holds data and rules. It references no package. The EditMode tests force it.
+- All other gameplay code compiles into `Assembly-CSharp`. That assembly
+  auto-references `Sogeti.Planting`, so glue code needs no new asmdef.
+- Code that needs a package (Input System, TextMesh Pro, XRI) belongs in
+  `Assembly-CSharp`. Adding those references to `Sogeti.Planting` would pull
+  packages into the test assembly for no gain.
+
+### The four layers of a gameplay feature
+1. **Data.** `SeedDefinition`, `GrowthStage`. ScriptableObject assets, no behaviour.
+2. **Rules.** `PlantingRules`, `GrowthPoints`, `PlantGrowth`. Pure C#. No scene,
+   no physics, no `Time.deltaTime`. This layer carries the tests.
+3. **Queries.** `PlantPlacementQuery`. Runs the raycast and the overlap test,
+   then calls layer 2. Plain C#, but it needs a live scene.
+4. **Scene.** `Plant`, `SeedPlanter`, `PlantingPreview`. MonoBehaviours only.
+
+Put a new rule in layer 2, where a test can reach it without a headset.
+
+### Communication
+- ScriptableObjects hold data. Plain C# events carry state changes.
+- Unity Atoms keeps one job, the camera position feeding the world space UI.
+  A shared score or timer Atom is static global state.
+- `SeedPlanter` raises `PlantPlaced` and `PlantRefused`. `Plant` raises
+  `Planted`, `StageAdvanced` and `Died`, and each event carries its point award.
+  The scoring step subscribes to those. It must never poll every plant.
+
 ## Steps for the game (original list)
 - The user can move using teleport on Terrain layers
 - - Obstacle layers can not be teleported on
@@ -188,55 +223,39 @@ root, not next to `Assets/`.
 - - Show Restart button
 
 ## Next Step Claude progress (overwrite when finished)
-**Build planting: place a seed on the terrain with the pointer.**
+**Show growth in the scene: the water meter UI above each plant.**
 
-The seed and tree data model is done. `Sogeti.Planting` holds `SeedDefinition`,
-`GrowthStage`, `PlantGrowth`, and `GrowthPoints`. Do not re-plan that model.
+Planting is built and verified. `Plant` already swaps the stage visual and the
+death visual, so a neglected seed does turn into dry branches on screen. The
+player just cannot see it coming. Do not re-plan the growth rules, they live in
+`PlantGrowth` and are tested.
 
 ### Goal
-The player aims at the terrain, sees whether the spot is legal, and plants a
-seed there. The spot rules come from the `SeedDefinition` asset, not from code.
+The player reads, at a glance, which plant needs water and how urgent it is.
 
 ### Decisions already made, do not re-open
-- ScriptableObjects hold **data**. Plain C# events carry **state changes**.
-- Unity Atoms stays at its current scope, the camera position feeding the world
-  space UI. A shared score or timer Atom is static global state.
-- Planting is an allow list on `Terrain`. See `## Layer conventions`.
-- Planted plants take layer `UniversalObstacle`, so one `Physics.OverlapSphere`
-  answers both "is a rock here" and "is another plant too close".
-- Pass `QueryTriggerInteraction.Ignore` in every gameplay raycast.
-- **The plant root owns the collider, the layer, and the water meter UI. The
-  stage prefab is a child visual only.** Growth swaps the child. Polygon Trees
-  grass prefabs ship with no collider, so a stage prefab cannot be the root.
-- Spacing between two seed types is `SeedDefinition.RequiredSpacingTo(other)`.
-  It takes the larger of the two demands. Do not recompute it at the call site,
-  or planting order changes the answer.
-- `SeedDefinition.LargestSpacing` is the `OverlapSphere` radius.
+- The meter belongs to the plant root, not to the stage prefab.
+- `Plant.HasWaterMeter` is the only switch. A dead or fully grown plant hides it.
+- The meter faces the player on the yaw axis only. Tilting world space UI
+  towards the headset reads as unstable in VR. Copy `PlantingPreview`.
+- `Plant` exposes `Water01`. The meter reads it. It never owns the number.
 
 ### Build
-Runtime code in `Assets/Scripts/Planting/`, namespace `Sogeti.Planting`.
-
-1. `Plant`, a `MonoBehaviour` on the plant root. It owns a `PlantGrowth` from
-   `SeedDefinition.CreateGrowth()`, calls `Tick` in `Update`, and swaps the
-   child visual on `StageAdvanced` and `Died`. Apply `GrowthStage.VisualScale`.
-2. A plant root prefab: collider, layer `UniversalObstacle`, empty visual
-   anchor child. One prefab serves every seed type.
-3. A placement validator. It refuses a hit that is not on `Terrain`, and refuses
-   a spot inside the required spacing of an existing plant.
-4. A planting interactor driven by the XRI ray, plus a ghost preview that shows
-   legal in one colour and blocked in another.
+1. A `PlantWaterMeter` component under `Assets/Scripts/UI/WorldUI/`.
+2. A meter prefab, parented to the `Plant` prefab root, above the visual anchor.
+3. Colour the fill by urgency, so a dying plant reads from across the field.
 
 ### Ask the user first
-1. Does the player plant from the same ray that teleports, or a separate mode?
-2. Does a blocked spot refuse silently, or show a reason?
+1. Does every plant show a meter always, or only inside a look or aim range?
+2. Does a dead plant stay in the world, or fade out after a few seconds?
 
 ### Done when
-The player plants a seed on the terrain in Play Mode with the XR Device
-Simulator, cannot plant on water, rock, or pond, and cannot plant too close to
-an existing plant. Verify with the key table under `### PC test setup`.
+The player plants a seed and watches the meter drain, so the death at 15 s is
+readable in advance instead of a surprise. Verify in Play Mode with the
+simulator.
 
 ### Not in this step
-The tool menu, the watering can, the score display, the timer, the intro UI.
+The watering can, the tool menu, the score display, the timer, the intro UI.
 
 ## Progress
 Update this section at the end of every step. Keep one line per step.
@@ -250,17 +269,101 @@ Order: teleport, seed data model, planting, growth stages, tool menu,
 watering can, scoring, timer and end screen, intro UI.
 
 ### Status
-- **Teleport: config done, unverified.** Scene, rig, world, and project settings
-  are set. Play Mode verification is open.
+- **Teleport: done, verified in Play Mode, left hand only.** The right hand
+  plants now. All 7 checks under `### Teleport step, what "verified" means`
+  passed.
 - **Seed and tree data model: done.** See `### Seed data model step, done`.
-- Planting: not started. See `## Next Step`.
-- Growth stages and water meter: logic done in `PlantGrowth`. The scene side,
-  the visual swap and the meter UI, is not started.
+- **Planting: done, verified in Play Mode.** See `### Planting step, done`.
+- Growth stages: `Plant` swaps the stage visual and the death visual, verified
+  in Play Mode. The water meter UI is not started. See `## Next Step`.
 - Tool and seed menu: not started.
 - Watering can: not started.
 - Scoring: not started.
 - Timer and end screen: not started.
 - Intro UI: not started.
+
+### Planting step, done
+Runtime code in `Assets/Scripts/Planting/` and `Assets/Scripts/Interaction/`.
+
+Design answers from the user:
+- **Split hands.** The left hand teleports. The right hand plants. There is no
+  mode to switch, so the player never loses a ray mid aim.
+- **A blocked spot states its reason.** A red ghost plus a short world space
+  line, for example "Pine is too close". The target player has little game
+  experience, so a colour alone does not teach the spacing rule.
+- **The right trigger plants.** `XRI Right Interaction/Activate`. In the XRI
+  defaults `Select` is the grip, not the trigger.
+
+New types:
+- `PlacementStatus`, `PlacementResult`, `NeighbourPlant`. The verdict on one
+  spot, plus the numbers behind it.
+- `PlantingRules`. Pure functions: surface allow list, slope filter, search
+  radius, spacing. This is where a new planting rule goes.
+- `PlacementReason`. One short player-facing line per status.
+- `PlantPlacementQuery`. The raycast and the overlap test. Buffers allocate once.
+- `Plant`. One planted plant. Owns the collider, the layer, the growth state and
+  the child visual.
+- `SeedPlanter`, `PlantingPreview`. The right hand ray and the ghost.
+
+New prefabs:
+- `Assets/Prefabs/Plants/Plant.prefab`. The plant root. Capsule collider
+  r 0.35, h 1.6, layer `UniversalObstacle`, plus an empty `Visual` child.
+  One prefab serves every seed type.
+- `Assets/Prefabs/Player/SeedPlanter.prefab`. The planter, the preview and the
+  reason label, already wired to the four seed assets and the plant prefab.
+
+Rules that later steps must not re-derive:
+- **The overlap radius is wider than `SeedDefinition.LargestSpacing`.** That
+  earlier note was wrong. Spacing is mutual, so a neighbour type that demands
+  more than this seed does still has to be found. `SeedPlanter` passes its seed
+  list to `PlantingRules.NeighbourSearchRadius`, which takes the largest demand
+  in that list. A 3 m sphere would never see a pine that demands 5 m.
+- Spacing measures ground distance. Height is ignored. A sphere query of the
+  same radius still finds every plant that can reject the spot.
+- A refusal reports the worst offender, not the first hit, so the label names
+  the neighbour that actually decides the spot.
+- `PlacementStatus.Valid` is deliberately not zero. A default `PlacementResult`
+  must never read as a legal spot.
+- Planting also refuses ground steeper than 30 degrees, the teleport tolerance.
+  Ground you cannot stand on is ground you cannot plant on.
+- A collider on a blocker layer with no `Plant` component is scenery. It refuses
+  the spot inside `obstacleClearance`, measured against its bounding box.
+- The plant root takes a random heading once, at plant time. Re-rolling it on a
+  stage swap would spin the tree.
+
+Tests: `Assets/Tests/EditMode/`, 3 new files, 46 new cases. 130 in total.
+
+### Planting step, scene wiring
+Four facts about the rig. A rebuilt rig loses all four.
+
+1. `SeedPlanter.prefab` sits under `PlayerRig > Camera Offset > Right
+   Controller`, Transform at zero.
+2. The `Teleport Interactor` child of that `Right Controller` is disabled.
+3. **Disabling that child is not enough.** On the same `Right Controller`,
+   `Controller Input Action Manager` has three cleared fields: `Teleport
+   Interactor`, `Teleport Mode`, `Teleport Mode Cancel`. That script calls
+   `m_TeleportInteractor.gameObject.SetActive(true)` the moment the teleport
+   action fires, so the Editor checkbox alone is undone at runtime. All three
+   fields are null guarded, so clearing them leaves grab and UI mediation intact.
+4. `Ray Origin` is empty on the planter, so it falls back to its own transform.
+   Do not wire `Right Controller Teleport Stabilized Origin`. That stabilizer
+   aims against the teleport interactor, which this hand no longer runs.
+
+### Planting step, what "verified" means
+The checks that closed the step. Re-run them if planting regresses.
+
+1. **Ghost follows the aim.** Press `Y`. A ghost plant tracks the hit point and
+   stands upright.
+2. **Legal ground accepts.** Aim at open ground. The ghost turns green. The
+   right trigger plants a tree that stays put.
+3. **Every refusal reads.** Aim at the pond, a rock, and a steep bank. The ghost
+   turns red and the label names the reason.
+4. **Spacing holds.** Aim within 3 m of a planted oak. The label reads "Oak is
+   too close". Aim past 4 m and it turns green again.
+5. **Neglect kills.** Plant a seed and wait 15 s. The visual swaps to dry
+   branches. There is no watering can yet, so every plant dies.
+6. **The hands stay split.** Press `T` then `1`. The left hand teleports. The
+   right hand still plants.
 
 ### Seed data model step, done
 Runtime code in `Assets/Scripts/Planting/`, assembly `Sogeti.Planting`.
@@ -328,8 +431,8 @@ Unity Atoms, and then every future package by hand.
 - Wire the `TeleportationArea` **Teleportation Provider** field to
    `PlayerRig > Locomotion > Teleportation`. This is a scene override. A prefab
    cannot reference a scene object.
-- Raise the pond blocker. On `World > Pond`, set Box Collider Center Y to
-   `-0.05`. The collider top sits about 2 cm above the terrain today. skipped this satisfied with current situation.
+- The pond blocker top sits about 2 cm above the terrain. Setting `World > Pond`
+   Box Collider Center Y to `-0.05` would add margin. Skipped, the gap works.
 
 ### Teleport step, what "verified" means
 The checks that close the step. Re-run them if teleport regresses.
@@ -370,13 +473,23 @@ Keys, read from `XR Device Simulator Controls.inputactions` and
 | Left mouse | Trigger. `G` grip. `M` menu. |
 | `Tab` | Cycle devices. `Esc` stop. `V` reset. |
 
-To teleport: press `Y`, then `1`. Aim with the mouse. Hold `W` to raise the arc.
-Release `W` to teleport. Press `1` again to restore movement.
+Hands are split. The left hand teleports. The right hand plants.
 
-XRI binds teleport to the right Primary 2D Axis, north sector. The simulated
+To teleport: press `T`, then `1`. Aim with the mouse. Hold `W` to raise the arc.
+Release `W` to teleport. Press `1` again to restore rig movement.
+
+To plant: press `Y`. Aim with the mouse. Click left mouse, the trigger.
+Planting is bound to `XRI Right Interaction/Activate`, not `Select`. `Select` is
+the grip in the XRI defaults.
+
+XRI binds teleport to the Primary 2D Axis, north sector. The simulated
 controller and the Quest thumbstick resolve the same binding.
 
 ### Known issues, parked
+- The right trigger is shared. The planter and the Near-Far Interactor both read
+  `Activate`, but the interactor only uses it on an object it already holds.
+  Nothing is grabbable yet, so they do not clash. The watering can step
+  revisits this.
 - XRI interaction layers 1 to 3 duplicate the physics layer names. Nothing
   reads them. Clearing them removes a source of confusion.
 - The 8 disabled terrain tiles sit at `y=0`, the active tile at `y=-1`. They do
