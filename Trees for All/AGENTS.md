@@ -243,96 +243,8 @@ Put a new rule in layer 2, where a test can reach it without a headset.
 - - Show Restart button
 
 ## Next Step Claude progress (overwrite when finished)
-**The tool and seed menu: finish the scene wiring.**
-
-The code is written and all four assemblies compile. The Editor work is open.
-Nothing is verified in Play Mode.
-
-### Design answers from the user, do not re-open
-- **A left wrist panel.** The left secondary button (Y, key `N`) opens and closes
-  it. The Quest system owns the left menu button, so that button stays free.
-- **The right hand ray picks an entry.** The open panel stows every right hand
-  tool, so the right trigger drives UI only.
-- **Two labelled rows.** A Tools row and a Seeds row. Each entry shows an icon
-  and a name.
-- **A seed readout on the right hand.** No tool readout. The player already sees
-  the planter or the can.
-- **The panel stays open until Y.** A pick does not close it.
-- **One mark at a time.** The hand holds one tool, so the panel lights one entry.
-  The seed row speaks for the planter alone and goes dark while the can is out.
-  `SelectedSeed` survives, so returning to the planter restores the same seed.
-- **Jump is off.** The menu removed the B button, which left B on Jump. The game
-  is teleport only for comfort.
-
-### Done already
-- `SeedCatalog`, a ScriptableObject. `SeedCatalog.asset` lists the four seeds.
-  `SeedPlanter` reads it. The menu reads the same asset, so no second seed list
-  can drift from the spacing rules.
-- `SeedPlanter.SeedChanged`, raised inside `SelectSeed`. `SelectSeed` is still
-  the only setter.
-- `RightHandToolSwitch.SetToolsStowed(bool)`. `ActiveIndex` survives a stow, so
-  closing the menu restores the same tool. `switchAction` and `SelectNextTool`
-  are deleted, and the scene override is reverted.
-- `Assets/Scripts/UI/ToolMenu/`: `ToolMenuEntry`, `SeedMenuRow`, `ToolMenuRow`,
-  `ToolMenuController`.
-- `Assets/Scripts/UI/WorldUI/SelectedSeedReadout.cs`.
-- `Assets/Editor/SeedIconBaker.cs`, menu item `Trees for All/Bake Seed Icons`.
-- `PlayerRig.prefab` disables the `Jump` GameObject.
-- `Assets/Prefabs/UI/ToolMenuEntry.prefab` and `Assets/Prefabs/UI/ToolMenu.prefab`.
-  The toggle binding sits inside `ToolMenu.prefab`. Both files are hand written
-  YAML, so the first Unity import is the first real test.
-
-### Open, all of it Editor work
-1. Swap the `EventSystem` module in `DevelopmentScene`. Remove `Input System UI
-   Input Module`, do not disable it. Add `XR UI Input Module`. Leave its action
-   fields empty, so the built in mouse fallback stays on. Without this module the
-   `m_EnableUIInteraction` flag on both interactors does nothing, and the panel
-   reads as dead with no error. DONE
-2. Parent `ToolMenu` under `PlayerRig > Camera Offset > Left Controller`. Start
-   at local position `(0.02, 0.07, -0.05)`, rotation `(50, 180, 0)`. Tune until
-   the panel faces the head. Keep `panelRoot` inactive. DONE
-3. Set `toolSwitch` and `planter` on `ToolMenuController`. Both sit on the Right
-   Controller, outside the menu prefab, so these two stay instance overrides. DONE
-4. Add a `SeedReadout` child to `SeedPlanter.prefab` with `SelectedSeedReadout`.
-   Clear `raycastTarget` on both graphics. Fixed rotation, no billboard. DONE
-5. Run `Trees for All/Bake Seed Icons`. Check the import settings. DONE
-6. Replace the placeholder sprite on the Water entry icon. DONE
-7. Run the EditMode suite. 160 cases must pass. DONE
-8. List the baked icons in the root `README.md`. DONE
-9. Re-run `Trees for All/Bake Seed Icons`. The first bake wrote magenta. DONE
-
-### Watch out
-- **`PreviewRenderUtility.Render()` defaults to the built-in pipeline.** The
-  first argument is `allowScriptableRenderPipeline` and it defaults to false.
-  URP shaders tag their SubShaders `"RenderPipeline" = "UniversalPipeline"`, so
-  nothing matches and Unity draws the magenta error shader over correct
-  geometry. `SeedIconBaker` passes `true`. Never drop that argument.
-- **Frame an icon against mesh renderers only.** `WateringCanPrefab` carries a
-  Particle System, and an idle `ParticleSystemRenderer` reports a bounds far
-  larger than its emitter. `GetComponentsInChildren<Renderer>()` picks it up, the
-  orthographic size follows it, and the model bakes down to one pixel on the
-  backdrop. `SeedIconBaker.CollectMeshRenderers` filters and disables the rest.
-- **The tool row entries carry authored art, the seed row does not.**
-  `SeedMenuRow` builds its entries from the catalog and calls `SetContent`.
-  `ToolMenuRow` reuses entries placed in `ToolMenu.prefab`, so a tool icon is a
-  prefab instance override on the entry's `Icon` image, not a code assignment.
-- Use a plain parented transform. `HandMenu` needs a palm up pose, which the PC
-  simulator cannot hold. `LazyFollow` adds a tween, which blurs a pass or fail.
-- The rows build on their first activation, so `ToolMenuController` refreshes the
-  highlight inside `Open()`.
-- The left hand also has UI interaction on. If its ray reaches its own panel,
-  untick `m_EnableUIInteraction` on the left interactor in `PlayerRig.prefab`.
-- **The Tools row holds the watering can alone.** A seed pick already switches
-  the hand to the planter, so a Plant button adds nothing. `ToolMenuRow.entries`
-  maps an array position to a tool index, so slot 0 stays empty and the can sits
-  at slot 1. Keep that empty slot, or the can selects the planter.
-
-### Done when
-The player picks a seed from the panel, the ghost changes to that seed, and the
-readout names it at the right hand. Verify in Play Mode.
-
-### Not in this step
-The score display, the timer, the intro UI.
+Not started. Next up per `### Build order`: scoring. Ask the user for the
+scoring design answers before writing any code.
 
 ## Progress
 Update this section at the end of every step. Keep one line per step.
@@ -354,11 +266,78 @@ watering can, scoring, timer and end screen, intro UI.
   visual and the water meter all passed. See `### Water meter step, built`.
 - **Watering can: done, wired into the rig, verified in Play Mode.** See
   `### Watering can step, built`.
-- **Tool and seed menu: code done, scene wiring open.** Nothing is verified in
-  Play Mode yet. See `## Next Step Claude progress`.
+- **Tool and seed menu: done, verified in Play Mode.** See
+  `### Tool and seed menu step, done`.
 - Scoring: not started.
 - Timer and end screen: not started.
 - Intro UI: not started.
+
+### Tool and seed menu step, done
+The player opens a left wrist panel, picks a seed or the watering can, and the
+readout names the pick at the right hand. Code in
+`Assets/Scripts/UI/ToolMenu/`, `Assets/Scripts/UI/WorldUI/`, and
+`Assets/Editor/SeedIconBaker.cs`.
+
+Design answers from the user:
+- **A left wrist panel.** The left secondary button (Y, key `N`) opens and
+  closes it. The Quest system owns the left menu button, so that stays free.
+- **The right hand ray picks an entry.** The open panel stows every right hand
+  tool, so the right trigger drives UI only.
+- **Two labelled rows.** A Tools row and a Seeds row. Each entry shows an icon
+  and a name.
+- **A seed readout on the right hand, no tool readout.** The player already
+  sees the planter or the can.
+- **The panel stays open until Y.** A pick does not close it.
+- **One mark at a time.** The hand holds one tool, so the panel lights one
+  entry. The seed row goes dark while the can is out. `SelectedSeed` survives,
+  so returning to the planter restores the same seed.
+- **Jump is off.** The menu removed the B button, which left B on Jump. The
+  game stays teleport only, for comfort.
+
+New types:
+- `SeedCatalog`, a ScriptableObject listing the four seeds. `SeedPlanter` and
+  the menu both read it, so no second seed list can drift from the spacing
+  rules.
+- `RightHandToolSwitch.SetToolsStowed(bool)`. `ActiveIndex` survives a stow, so
+  closing the menu restores the same tool.
+- `ToolMenuEntry`, `SeedMenuRow`, `ToolMenuRow`, `ToolMenuController`.
+- `SelectedSeedReadout`.
+- `SeedIconBaker`, menu item `Trees for All/Bake Seed Icons`.
+
+Rules that later steps must not re-derive:
+- **`PreviewRenderUtility.Render()` defaults to the built-in pipeline.** The
+  first argument is `allowScriptableRenderPipeline`, default false. URP
+  SubShaders tag `"RenderPipeline" = "UniversalPipeline"`, so nothing matches
+  and Unity draws the magenta error shader over correct geometry.
+  `SeedIconBaker` passes `true`. Never drop that argument.
+- **Frame an icon against mesh renderers only.** `WateringCanPrefab` carries a
+  Particle System, and an idle `ParticleSystemRenderer` reports bounds far
+  larger than its emitter. `SeedIconBaker.CollectMeshRenderers` filters and
+  disables the rest.
+- **The tool row entries carry authored art, the seed row does not.**
+  `SeedMenuRow` builds its entries from the catalog and calls `SetContent`.
+  `ToolMenuRow` reuses entries placed in `ToolMenu.prefab`, so a tool icon is a
+  prefab instance override on the entry's `Icon` image, not a code assignment.
+- **The Tools row holds the watering can alone.** A seed pick already switches
+  the hand to the planter, so a Plant button adds nothing. `ToolMenuRow.entries`
+  maps an array position to a tool index, so slot 0 stays empty and the can
+  sits at slot 1. Keep that empty slot, or the can selects the planter.
+- The left hand also has UI interaction on. Untick `m_EnableUIInteraction` on
+  the left interactor in `PlayerRig.prefab`, or its ray hits its own panel.
+- The rows build on first activation, so `ToolMenuController` refreshes the
+  highlight inside `Open()`.
+- Use a plain parented transform for the panel, not `LazyFollow`. `HandMenu`
+  needs a palm-up pose, which the PC simulator cannot hold, and a tween would
+  blur a pass or fail check.
+- The scene `EventSystem` needs `XR UI Input Module`, not `Input System UI
+  Input Module`, with empty action fields so the mouse fallback stays on.
+  Without it, `m_EnableUIInteraction` does nothing and the panel reads as dead
+  with no error.
+
+Tests: EditMode suite, 160 total.
+
+**Verified in Play Mode.** The player picks a seed from the panel, the ghost
+changes to that seed, and the readout names it at the right hand.
 
 ### Watering can step, built
 The player tilts a can over a plant and the meter rises. Code in
