@@ -29,7 +29,7 @@ namespace Sogeti.Editor
         // The can reads best from the side, where the spout and the handle both show.
         private static readonly Quaternion ToolView = Quaternion.Euler(14f, 55f, 0f);
 
-        [MenuItem("Trees for All/Bake Seed Icons")]
+        [MenuItem("Tools/Sogeti/Trees for All/Bake Seed Icons")]
         public static void BakeAll()
         {
             List<SeedDefinition> seeds = FindSeeds();
@@ -64,7 +64,7 @@ namespace Sogeti.Editor
             Debug.Log($"Seed icon baker: {baked} of {seeds.Count} icons written to {SeedFolder}.");
         }
 
-        [MenuItem("Trees for All/Bake Tool Icons")]
+        [MenuItem("Tools/Sogeti/Trees for All/Bake Tool Icons")]
         public static void BakeTools()
         {
             GameObject can = AssetDatabase.LoadAssetAtPath<GameObject>(WateringCanPath);
@@ -79,6 +79,7 @@ namespace Sogeti.Editor
             string path = $"{ToolFolder}/ToolIconWateringCan.png";
             if (BakePrefab(can, path, ToolView) == null)
             {
+                Debug.LogWarning($"Seed icon baker: {WateringCanPath} has no mesh renderer. The icon at {path} is unchanged.", can);
                 return;
             }
 
@@ -151,7 +152,13 @@ namespace Sogeti.Editor
                 instance.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
                 preview.AddSingleGO(instance);
 
-                Bounds bounds = MeshBounds(instance);
+                List<Renderer> meshes = CollectMeshRenderers(instance);
+                if (meshes.Count == 0)
+                {
+                    return null;
+                }
+
+                Bounds bounds = MeshBounds(meshes);
                 FrameCamera(preview.camera, bounds, view);
                 SetUpLights(preview);
 
@@ -194,16 +201,34 @@ namespace Sogeti.Editor
             preview.lights[1].transform.rotation = Quaternion.Euler(20f, -60f, 0f);
         }
 
-        private static Bounds MeshBounds(GameObject instance)
+        /// <summary>
+        /// The mesh renderers, with every other renderer switched off.
+        /// An idle ParticleSystemRenderer reports a bounds far larger than its
+        /// emitter. Framing against that shrinks the real model to a single pixel,
+        /// which is what the watering can did.
+        /// </summary>
+        private static List<Renderer> CollectMeshRenderers(GameObject instance)
         {
-            Renderer[] renderers = instance.GetComponentsInChildren<Renderer>();
-            if (renderers.Length == 0)
+            List<Renderer> meshes = new List<Renderer>();
+            foreach (Renderer renderer in instance.GetComponentsInChildren<Renderer>())
             {
-                return new Bounds(Vector3.zero, Vector3.one);
+                if (renderer is MeshRenderer or SkinnedMeshRenderer)
+                {
+                    meshes.Add(renderer);
+                }
+                else
+                {
+                    renderer.enabled = false;
+                }
             }
 
+            return meshes;
+        }
+
+        private static Bounds MeshBounds(List<Renderer> renderers)
+        {
             Bounds bounds = renderers[0].bounds;
-            for (int i = 1; i < renderers.Length; i++)
+            for (int i = 1; i < renderers.Count; i++)
             {
                 bounds.Encapsulate(renderers[i].bounds);
             }

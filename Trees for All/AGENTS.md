@@ -299,7 +299,7 @@ Nothing is verified in Play Mode.
 6. Replace the placeholder sprite on the Water entry icon. DONE
 7. Run the EditMode suite. 160 cases must pass. DONE
 8. List the baked icons in the root `README.md`. DONE
-9. Re-run `Trees for All/Bake Seed Icons`. The first bake wrote magenta. OPEN
+9. Re-run `Trees for All/Bake Seed Icons`. The first bake wrote magenta. DONE
 
 ### Watch out
 - **`PreviewRenderUtility.Render()` defaults to the built-in pipeline.** The
@@ -307,6 +307,11 @@ Nothing is verified in Play Mode.
   URP shaders tag their SubShaders `"RenderPipeline" = "UniversalPipeline"`, so
   nothing matches and Unity draws the magenta error shader over correct
   geometry. `SeedIconBaker` passes `true`. Never drop that argument.
+- **Frame an icon against mesh renderers only.** `WateringCanPrefab` carries a
+  Particle System, and an idle `ParticleSystemRenderer` reports a bounds far
+  larger than its emitter. `GetComponentsInChildren<Renderer>()` picks it up, the
+  orthographic size follows it, and the model bakes down to one pixel on the
+  backdrop. `SeedIconBaker.CollectMeshRenderers` filters and disables the rest.
 - **The tool row entries carry authored art, the seed row does not.**
   `SeedMenuRow` builds its entries from the catalog and calls `SetContent`.
   `ToolMenuRow` reuses entries placed in `ToolMenu.prefab`, so a tool icon is a
