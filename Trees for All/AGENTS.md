@@ -17,9 +17,9 @@ and grows trees inside a limited play space.
 - Repo host: GitHub
 - Company name: `Sogeti`
 
-Teleport and planting work in Play Mode. Each plant now carries a water meter.
-The meter compiles and its rules are tested, but nobody has run it in Play Mode
-yet. See `## Progress` at the end of this file for the current state.
+Teleport, planting and the water meter work in Play Mode. The watering can is
+built and tested, but it is not wired into the rig yet. See `## Progress` at the
+end of this file for the current state.
 
 - Work scene: `Assets/Scenes/DevelopmentScene.unity`.
 - Player rig: `Assets/Prefabs/Player/PlayerRig.prefab`, a prefab variant of the
@@ -92,7 +92,7 @@ not mix the two.
 
 | Layer | Meaning | Blocks teleport | Blocks planting |
 | --- | --- | --- | --- |
-| 2 `Ignore Raycast` | World space UI that must never stop a ray. The water meter. Also the layer a dead plant moves to. | no | no |
+| 2 `Ignore Raycast` | World space UI that must never stop a ray. The water meter and the watering can. Also the layer a dead plant moves to. | no | no |
 | 3 `Terrain` | The only surface to stand on and plant on. Carries the `TeleportationArea`. | no, it is the target | no |
 | 4 `Water` | Visual water and the watering can refill trigger. Colliders here are triggers. | no, the pond body blocks instead | yes |
 | 6 `PlayerObstacle` | Blocks the player only. Pond body, boundary walls. | yes | no |
@@ -178,8 +178,10 @@ root, not next to `Assets/`.
 Keep this current. It saves a rediscovery pass at the start of the next session.
 
 ### Assemblies
-- `Sogeti.Planting` (`Assets/Scripts/Planting/`) is the only asmdef in `Assets/`.
-  It holds data and rules. It references no package. The EditMode tests force it.
+- `Sogeti.Planting` (`Assets/Scripts/Planting/`) holds the planting data and
+  rules. It references no package. The EditMode tests force it.
+- `Sogeti.Watering` (`Assets/Scripts/Watering/`) holds the pour rules, for the
+  same reason. `PourFlow` and `WaterTank` need no scene and no package.
 - All other gameplay code compiles into `Assembly-CSharp`. That assembly
   auto-references `Sogeti.Planting`, so glue code needs no new asmdef.
 - Code that needs a package (Input System, TextMesh Pro, XRI) belongs in
@@ -222,6 +224,9 @@ Put a new rule in layer 2, where a test can reach it without a headset.
 - Users can water the trees using a watering can
 - - Users tilt the watering can over/next to the trees to water the trees.
 - - Optional: the watering can empties when pouring, refill using a pond or tap.
+- The user sees which seed is selected
+- - A visual on the hand or in the menu. Today the first seed is preselected and
+- - nothing names it.
 - The user gets points for each tree stage reached per tree
 - - the longer it takes to reach a stage the fewer points the user receives.
 - - later stages provide more points e.g. seed -> +10 points, sprout -> +20 points, fully grown tree +40
@@ -231,33 +236,40 @@ Put a new rule in layer 2, where a test can reach it without a headset.
 - - Show Restart button
 
 ## Next Step Claude progress (overwrite when finished)
-**The watering can: let the player put water back into a plant.**
+**The tool and seed menu: let the player pick a seed and see which one is picked.**
 
-Every plant dies today, because nothing adds water. `Plant.ApplyWaterFlow` is
-built and waits for a caller. Do not re-plan the growth rules or the meter.
+The right hand carries two tools and four seed types. `RightHandToolSwitch`
+already cycles the tools on one button, and `SeedPlanter.SelectSeed` already
+waits for a caller. Nothing tells the player what is in their hand.
 
 ### Goal
-The player tilts a can over a plant, and the meter rises instead of draining.
+The player opens a menu, picks one of the four seeds, and always sees which seed
+and which tool is active.
 
 ### Decisions already made, do not re-open
-- `Plant.ApplyWaterFlow(float flow01)` is the only entry point. The value is a
-  throttle from 0 to 1, not a rate. The seed owns the fill rate.
-- The player tilts the can to pour. A button does not teach the action.
-- The pond refill trigger is layer 4 `Water` and already sits in `World.prefab`.
+- `SeedPlanter.SelectSeed(SeedDefinition)` is the only entry point. `null` puts
+  the ray in an idle state.
+- `RightHandToolSwitch.SelectTool(int)` and its `ToolChanged` event replace the
+  button. Do not add a second switch path.
+- `SeedDefinition.MenuIcon` is empty on all four seed assets. This step fills them.
 
 ### Ask the user first
-1. Does the can hold a limited charge, or does it pour forever?
-2. Does the player grab the can, or does the can attach to the left hand?
+1. Which hand opens the menu? The right hand holds every tool, and the left hand
+   teleports. This was left open on purpose.
+2. Is the menu a wrist panel, a radial menu, or a row of world space buttons?
 
 ### Watch out
-- The right trigger is shared. See `### Known issues, parked`. The planter and
-  the Near-Far Interactor both read `Activate`. A grabbable can makes them clash.
+- Layer 8 `Overlay UI` renders nowhere. See `## Layer conventions`. World space
+  UI the camera must draw belongs on layer 2.
+- A menu that uses the right trigger clashes with planting. The tool switch keeps
+  one tool active at a time, so keep any new input off `Activate`.
 
 ### Done when
-A watered seed reaches stage 2 and its meter refills. Verify in Play Mode.
+The player picks a seed from the menu, the ghost changes to that seed, and a
+visual names the selected seed and tool. Verify in Play Mode.
 
 ### Not in this step
-The tool menu, the score display, the timer, the intro UI.
+The score display, the timer, the intro UI.
 
 ## Progress
 Update this section at the end of every step. Keep one line per step.
@@ -276,14 +288,101 @@ watering can, scoring, timer and end screen, intro UI.
   passed.
 - **Seed and tree data model: done.** See `### Seed data model step, done`.
 - **Planting: done, verified in Play Mode.** See `### Planting step, done`.
-- **Growth stages: built, EditMode tests pass, Play Mode run still open.** The
-  stage visual and the death visual were verified earlier. The water meter is
-  new and unverified. See `### Water meter step, built`.
+- **Growth stages: done, verified in Play Mode.** The stage visual, the death
+  visual and the water meter all passed. See `### Water meter step, built`.
+- **Watering can: built, EditMode tests pass, scene wiring and Play Mode run
+  still open.** See `### Watering can step, built`.
 - Tool and seed menu: not started.
-- Watering can: not started.
 - Scoring: not started.
 - Timer and end screen: not started.
 - Intro UI: not started.
+
+### Watering can step, built
+The player tilts a can over a plant and the meter rises. Code in
+`Assets/Scripts/Watering/`, `Assets/Scripts/Interaction/` and
+`Assets/Scripts/UI/WorldUI/`.
+
+Design answers from the user:
+- **The right hand carries every tool.** Planting, watering and refilling. The
+  left hand keeps teleport only.
+- **The right primary button swaps the tool.** Seeds or can, never both.
+- **Limited charge.** About 10 seconds of full pour. Dip the spout in the pond.
+- **Tilt pours.** `requireTriggerToPour` on the can prefab adds the trigger, so
+  the developer can compare both. Default is tilt alone.
+
+New types:
+- `PourFlow`, static and pure. Tilt degrees to a 0 to 1 throttle.
+- `WaterTank`, a plain class. Charge measured in seconds of full pour.
+- `RightHandToolSwitch`, the scene component that keeps one tool active.
+- `WateringCan`, the scene component. It only ever calls `Plant.ApplyWaterFlow`.
+- `WateringCanLevelMeter`, the bar printed on the can.
+
+Rules that later steps must not re-derive:
+- **One tool is active at a time, so the shared right trigger no longer clashes.**
+  The planter GameObject is off while the can is out. This closes the entry that
+  used to sit in `### Known issues, parked`. Keep it that way, or a grabbable can
+  will plant a seed on the press that pours.
+- **The tool switch action is defined inline on the component.** `XRI Right
+  Interaction` has no primary button action and `Assets/Samples/` is read-only.
+  Bind it to `<XRController>{RightHand}/{PrimaryButton}`, key `B` in the simulator.
+- **The pond refill is a `Physics.CheckSphere` against layer 4, not a trigger
+  callback.** A hand held can has no Rigidbody, so `OnTriggerStay` never fires.
+- Watering targets the nearest plant with `HasWaterMeter`. A dead plant is
+  already excluded, because it moves to layer 2. Do not add a filter.
+- **The can prefab shipped with a Rigidbody and a convex `MeshCollider`.** Both
+  are removed. A non-kinematic Rigidbody fights a parented transform, and layer 0
+  sits inside `occluderMask`, so the can would stop the player's own rays.
+- **The imported mesh carries a baked rotation.** `WateringCan.tiltReference`
+  exists for that. Point it at a transform whose up axis leaves the top of the
+  can, or the tilt reads the wrong angle.
+- `Sogeti.Watering` is the second asmdef. Pure rules go there so EditMode tests
+  reach them, and `Sogeti.Planting` stays about planting.
+
+Tests: `Assets/Tests/EditMode/PourFlowTests.cs` and `WaterTankTests.cs`,
+25 new cases. 160 total.
+
+**Not wired and not verified in Play Mode.** The scripts and the can prefab are
+done. The rig wiring is still open, see `### Watering can step, what to wire`.
+
+### Watering can step, what to wire
+The scene edit needs the Editor. The Right Controller lives in the Starter Assets
+rig, and its GameObject id is materialized in no readable file, so the wiring
+cannot be written into `DevelopmentScene.unity` by hand.
+
+1. Select `PlayerRig > Camera Offset > Right Controller`. Add
+   `RightHandToolSwitch`.
+2. Drag `Assets/GardenTools/Watering Can/WateringCanPrefab.prefab` onto that same
+   `Right Controller`. Place and rotate it until it reads as held. `Cube.001`
+   had a 2.8 m offset baked in. It is zeroed now, so check the can sits on the
+   root and move `Cube.001` if it does not.
+3. Fill the switch `tools` array. Element 0 the existing `SeedPlanter`, element 1
+   the can. Element 0 is the tool the hand starts with.
+4. On the switch, define the `switchAction` inline and bind it to
+   `<XRController>{RightHand}/{PrimaryButton}`.
+5. Move the can's `Spout` child to the mouth of the can.
+6. Add a `ParticleSystem` under `Spout` that emits down, URP `Particles/Unlit`,
+   and reuse `Assets/Textures/UI/Droplet.png`. Assign it to the can `stream`
+   field. The field is null guarded, so the can works without it.
+7. Set `tiltReference` to a transform whose up axis leaves the top of the can.
+   Leave it empty only if the can root already reads upright.
+8. Check the `Level` bar sits where the player can read it.
+
+### Watering can step, what to check
+Run these after the wiring, before you call the step done.
+
+1. **The tools swap.** Press `B`. The can appears and the planting ray and ghost
+   disappear. Press `B` again and planting returns.
+2. **Tilt pours.** Press `Y` to aim the right hand, hold `Left Ctrl` and move the
+   mouse to tilt. Past about 45 degrees water pours and the level drops.
+3. **A plant drinks.** Plant a seed, swap to the can, pour over it. The plant
+   meter rises and turns green. Keep pouring and the plant reaches stage 2.
+4. **The can runs dry.** Pour without stopping. The stream stops.
+5. **The pond refills.** Hold the spout in the pond. The level climbs to full.
+6. **The trigger option works.** Tick `requireTriggerToPour`. Tilt alone pours
+   nothing. Tilt plus left mouse pours.
+7. **Nothing regressed.** Re-run `### Planting step, what "verified" means` and
+   `### Water meter step, what to check`. The can must not block the planting ray
+   or the teleport ray.
 
 ### Water meter step, built
 A bar and a droplet float above every living plant. Code in
@@ -552,10 +651,9 @@ XRI binds teleport to the Primary 2D Axis, north sector. The simulated
 controller and the Quest thumbstick resolve the same binding.
 
 ### Known issues, parked
-- The right trigger is shared. The planter and the Near-Far Interactor both read
-  `Activate`, but the interactor only uses it on an object it already holds.
-  Nothing is grabbable yet, so they do not clash. The watering can step
-  revisits this.
+- ~~The right trigger is shared.~~ Closed by the watering can step.
+  `RightHandToolSwitch` keeps one tool active, so only one reader of `Activate`
+  is ever alive. A grabbable object would re-open this.
 - XRI interaction layers 1 to 3 duplicate the physics layer names. Nothing
   reads them. Clearing them removes a source of confusion.
 - The 8 disabled terrain tiles sit at `y=0`, the active tile at `y=-1`. They do

@@ -3,6 +3,7 @@
     "rootNamespace": "Sogeti.Planting.Tests",
     "references": [
         "Sogeti.Planting",
+        "Sogeti.Watering",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],
