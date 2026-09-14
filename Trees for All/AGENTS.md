@@ -92,8 +92,9 @@ not mix the two.
 
 | Layer | Meaning | Blocks teleport | Blocks planting |
 | --- | --- | --- | --- |
-| 2 `Ignore Raycast` | World space UI that must never stop a ray. The water meter and the watering can. Also the layer a dead plant moves to. | no | no |
+| 2 `Ignore Raycast` | Non-interactive world UI. The water meter and the can level bar. Also the layer a dead plant moves to. | no | no |
 | 3 `Terrain` | The only surface to stand on and plant on. Carries the `TeleportationArea`. | no, it is the target | no |
+| 5 `UI` | Interactive uGUI. The tool menu panel and the seed readout. | only with a collider | only with a collider |
 | 4 `Water` | Visual water and the watering can refill trigger. Colliders here are triggers. | no, the pond body blocks instead | yes |
 | 6 `PlayerObstacle` | Blocks the player only. Pond body, boundary walls. | yes | no |
 | 7 `UniversalObstacle` | Blocks the player and placement. Rocks, scenery, props. | yes | yes |
@@ -114,7 +115,13 @@ Rules:
   XR Simulation bit. No layer blocks the player and passes the planting ray.
 - The player camera culls layer 8 `Overlay UI`. The scene overrides the culling
   mask to 4294967039. Only an `OVROverlayCanvas` draws there. World UI the camera
-  must draw belongs on layer 2.
+  must draw belongs on layer 2 or layer 5.
+- **A clickable canvas belongs on layer 5, never on layer 2.** The Near-Far
+  Interactor hands its own mask to the UI raycast, and
+  `Left_NearFarInteractor.prefab` sets `m_RaycastMask.m_Bits: 2147483689`. That
+  covers layers 0, 3, 5 and 31 only. A panel on layer 2 never receives a hit.
+- Layer 5 sits inside `occluderMask` and the teleport mask, but a Canvas carries
+  no collider. Both masks gate colliders, so a panel there blocks no ray.
 - Pass `QueryTriggerInteraction.Ignore` in every gameplay raycast.
   `Physics.queriesHitTriggers` is on, and the pond refill trigger overlaps the
   ground.
@@ -236,37 +243,77 @@ Put a new rule in layer 2, where a test can reach it without a headset.
 - - Show Restart button
 
 ## Next Step Claude progress (overwrite when finished)
-**The tool and seed menu: let the player pick a seed and see which one is picked.**
+**The tool and seed menu: finish the scene wiring.**
 
-The right hand carries two tools and four seed types. `RightHandToolSwitch`
-already cycles the tools on one button, and `SeedPlanter.SelectSeed` already
-waits for a caller. Nothing tells the player what is in their hand.
+The code is written and all four assemblies compile. The Editor work is open.
+Nothing is verified in Play Mode.
 
-### Goal
-The player opens a menu, picks one of the four seeds, and always sees which seed
-and which tool is active.
+### Design answers from the user, do not re-open
+- **A left wrist panel.** The left secondary button (Y, key `N`) opens and closes
+  it. The Quest system owns the left menu button, so that button stays free.
+- **The right hand ray picks an entry.** The open panel stows every right hand
+  tool, so the right trigger drives UI only.
+- **Two labelled rows.** A Tools row and a Seeds row. Each entry shows an icon
+  and a name.
+- **A seed readout on the right hand.** No tool readout. The player already sees
+  the planter or the can.
+- **The panel stays open until Y.** A pick does not close it.
+- **Jump is off.** The menu removed the B button, which left B on Jump. The game
+  is teleport only for comfort.
 
-### Decisions already made, do not re-open
-- `SeedPlanter.SelectSeed(SeedDefinition)` is the only entry point. `null` puts
-  the ray in an idle state.
-- `RightHandToolSwitch.SelectTool(int)` and its `ToolChanged` event replace the
-  button. Do not add a second switch path.
-- `SeedDefinition.MenuIcon` is empty on all four seed assets. This step fills them.
+### Done already
+- `SeedCatalog`, a ScriptableObject. `SeedCatalog.asset` lists the four seeds.
+  `SeedPlanter` reads it. The menu reads the same asset, so no second seed list
+  can drift from the spacing rules.
+- `SeedPlanter.SeedChanged`, raised inside `SelectSeed`. `SelectSeed` is still
+  the only setter.
+- `RightHandToolSwitch.SetToolsStowed(bool)`. `ActiveIndex` survives a stow, so
+  closing the menu restores the same tool. `switchAction` and `SelectNextTool`
+  are deleted, and the scene override is reverted.
+- `Assets/Scripts/UI/ToolMenu/`: `ToolMenuEntry`, `SeedMenuRow`, `ToolMenuRow`,
+  `ToolMenuController`.
+- `Assets/Scripts/UI/WorldUI/SelectedSeedReadout.cs`.
+- `Assets/Editor/SeedIconBaker.cs`, menu item `Trees for All/Bake Seed Icons`.
+- `PlayerRig.prefab` disables the `Jump` GameObject.
 
-### Ask the user first
-1. Which hand opens the menu? The right hand holds every tool, and the left hand
-   teleports. This was left open on purpose.
-2. Is the menu a wrist panel, a radial menu, or a row of world space buttons?
+### Open, all of it Editor work
+1. Swap the `EventSystem` module in `DevelopmentScene`. Remove `Input System UI
+   Input Module`, do not disable it. Add `XR UI Input Module`. Leave its action
+   fields empty, so the built in mouse fallback stays on. Without this module the
+   `m_EnableUIInteraction` flag on both interactors does nothing, and the panel
+   reads as dead with no error.
+2. Build `Assets/Prefabs/UI/ToolMenuEntry.prefab`: a `Button`, a background
+   `Image`, `ToolMenuEntry`, plus `Icon`, `Label` and `SelectedMark` children.
+3. Build `Assets/Prefabs/UI/ToolMenu.prefab`: root with `ToolMenuController`,
+   child `Panel` with a world space `Canvas`, `CanvasScaler`, `GraphicRaycaster`
+   and `TrackedDeviceGraphicRaycaster`. Layer 5 on every child. RectTransform
+   400 x 300 at local scale 0.0006. A `VerticalLayoutGroup` holds a Tools row
+   and a Seeds row. Give the seed row a `GridLayoutGroup` at a fixed cell size,
+   so a fifth seed wraps with no edit. Copy the canvas setup from
+   `Assets/Samples/.../DemoSceneAssets/Prefabs/UI/Interactive Controls.prefab`,
+   but use `TextMeshProUGUI`, not the legacy `Text` in that sample.
+4. Author the toggle binding **inside** `ToolMenu.prefab`, not as a scene
+   override: `<XRController>{LeftHand}/{SecondaryButton}`, interaction `Press`.
+5. Parent `ToolMenu` under `PlayerRig > Camera Offset > Left Controller`. Start
+   at local position `(0.02, 0.07, -0.05)`, rotation `(50, 180, 0)`. Tune until
+   the panel faces the head. Keep `panelRoot` inactive.
+6. Add a `SeedReadout` child to `SeedPlanter.prefab` with `SelectedSeedReadout`.
+   Clear `raycastTarget` on both graphics. Fixed rotation, no billboard.
+7. Run `Trees for All/Bake Seed Icons`. Check the import settings.
+8. Run the EditMode suite. 160 cases must pass.
+9. List the baked icons in the root `README.md`.
 
 ### Watch out
-- Layer 8 `Overlay UI` renders nowhere. See `## Layer conventions`. World space
-  UI the camera must draw belongs on layer 2.
-- A menu that uses the right trigger clashes with planting. The tool switch keeps
-  one tool active at a time, so keep any new input off `Activate`.
+- Use a plain parented transform. `HandMenu` needs a palm up pose, which the PC
+  simulator cannot hold. `LazyFollow` adds a tween, which blurs a pass or fail.
+- The rows build on their first activation, so `ToolMenuController` refreshes the
+  highlight inside `Open()`.
+- The left hand also has UI interaction on. If its ray reaches its own panel,
+  untick `m_EnableUIInteraction` on the left interactor in `PlayerRig.prefab`.
 
 ### Done when
-The player picks a seed from the menu, the ghost changes to that seed, and a
-visual names the selected seed and tool. Verify in Play Mode.
+The player picks a seed from the panel, the ghost changes to that seed, and the
+readout names it at the right hand. Verify in Play Mode.
 
 ### Not in this step
 The score display, the timer, the intro UI.
@@ -291,7 +338,8 @@ watering can, scoring, timer and end screen, intro UI.
   visual and the water meter all passed. See `### Water meter step, built`.
 - **Watering can: done, wired into the rig, verified in Play Mode.** See
   `### Watering can step, built`.
-- Tool and seed menu: not started.
+- **Tool and seed menu: code done, scene wiring open.** Nothing is verified in
+  Play Mode yet. See `## Next Step Claude progress`.
 - Scoring: not started.
 - Timer and end screen: not started.
 - Intro UI: not started.
@@ -321,9 +369,8 @@ Rules that later steps must not re-derive:
   The planter GameObject is off while the can is out. This closes the entry that
   used to sit in `### Known issues, parked`. Keep it that way, or a grabbable can
   will plant a seed on the press that pours.
-- **The tool switch action is defined inline on the component.** `XRI Right
-  Interaction` has no primary button action and `Assets/Samples/` is read-only.
-  Bind it to `<XRController>{RightHand}/{PrimaryButton}`, key `B` in the simulator.
+- ~~The tool switch action is defined inline on the component.~~ The button is
+  gone. The tool menu replaced it. `SelectTool(int)` is the only switch path.
 - **The pond refill is a `Physics.CheckSphere` against layer 4, not a trigger
   callback.** A hand held can has no Rigidbody, so `OnTriggerStay` never fires.
 - Watering targets the nearest plant with `HasWaterMeter`. A dead plant is
@@ -546,6 +593,7 @@ Keys, read from `XR Device Simulator Controls.inputactions` and
 | `1` | Toggle `W` `A` `S` `D` between rig movement and Primary 2D Axis |
 | `I` `K` `J` `L` | Primary 2D Axis of the resting hand |
 | Left mouse | Trigger. `G` grip. `M` menu. |
+| `B` / `N` | Primary / secondary button of the manipulated hand |
 | `Tab` | Cycle devices. `Esc` stop. `V` reset. |
 
 Hands are split. The left hand teleports. The right hand plants.

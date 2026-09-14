@@ -59,11 +59,7 @@ MonoBehaviour:
     m_Bits: 192
   maxSurfaceAngle: 30
   obstacleClearance: 0.4
-  plantableSeeds:
-  - {fileID: 11400000, guid: 993dd2bc7d0648469f5cacbf7daa60cd, type: 2}
-  - {fileID: 11400000, guid: 3c1cb10c06d04969815ad2e31ccceb2e, type: 2}
-  - {fileID: 11400000, guid: d410d7fd588840468b01b504eef82b4d, type: 2}
-  - {fileID: 11400000, guid: 223b7a43d9a749798b51f049874f7c12, type: 2}
+  seedCatalog: {fileID: 11400000, guid: 11298ce000694461a15ba10b216eff97, type: 2}
   plantPrefab: {fileID: 4820156300000000001, guid: ae421e91465348f0bc1daf709efd4199, type: 3}
   plantParent: {fileID: 0}
   preview: {fileID: 5910000000000000007}

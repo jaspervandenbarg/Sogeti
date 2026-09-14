@@ -37,8 +37,9 @@ namespace Sogeti.Interaction
         private float obstacleClearance = 0.4f;
 
         [Header("Seeds")]
+        [Tooltip("The seeds the player can pick. The tool menu reads the same asset.")]
         [SerializeField]
-        private SeedDefinition[] plantableSeeds = Array.Empty<SeedDefinition>();
+        private SeedCatalog seedCatalog;
         [SerializeField]
         private GameObject plantPrefab;
         [Tooltip("Optional parent for planted plants, so the Hierarchy stays readable.")]
@@ -66,18 +67,28 @@ namespace Sogeti.Interaction
         /// <summary>Raised on a refused trigger press, so a later step can add a sound or a hint.</summary>
         public event Action<PlacementResult> PlantRefused;
 
+        /// <summary>The new seed. The menu highlight and the hand readout both follow this, never the click.</summary>
+        public event Action<SeedDefinition> SeedChanged;
+
         public SeedDefinition SelectedSeed { get; private set; }
 
         public PlacementResult CurrentResult => currentResult;
 
-        /// <summary>The tool menu step calls this. Null puts the ray back in an idle state.</summary>
+        /// <summary>The only way to change the seed. Null puts the ray back in an idle state.</summary>
         public void SelectSeed(SeedDefinition seed)
         {
+            if (SelectedSeed == seed)
+            {
+                return;
+            }
+
             SelectedSeed = seed;
             if (seed == null && preview != null)
             {
                 preview.Hide();
             }
+
+            SeedChanged?.Invoke(SelectedSeed);
         }
 
         private void Awake()
@@ -98,12 +109,12 @@ namespace Sogeti.Interaction
                 blockerMask,
                 maxSurfaceAngle,
                 obstacleClearance,
-                plantableSeeds);
+                seedCatalog != null ? seedCatalog.Seeds : null);
 
-            // Planting has to work before the tool menu exists, so the first seed is preselected.
-            if (SelectedSeed == null && plantableSeeds.Length > 0)
+            // The menu opens on a seed the player never picked, so the hand is never empty.
+            if (SelectedSeed == null && seedCatalog != null)
             {
-                SelectedSeed = plantableSeeds[0];
+                SelectSeed(seedCatalog.FirstSeed);
             }
         }
 

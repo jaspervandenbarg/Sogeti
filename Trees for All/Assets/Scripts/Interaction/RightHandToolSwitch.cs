@@ -1,6 +1,5 @@
 using System;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 namespace Sogeti.Interaction
 {
@@ -9,26 +8,24 @@ namespace Sogeti.Interaction
     /// The planter and the watering can both read the right trigger, so letting
     /// both run would plant a seed on the press that pours. Only the active tool
     /// GameObject stays enabled, which settles that clash without a mode flag
-    /// inside either tool. The tool menu step replaces the button, not this API.
+    /// inside either tool. The tool menu is the only caller.
     /// </summary>
     public class RightHandToolSwitch : MonoBehaviour
     {
         [SerializeField]
-        [Tooltip("In player order. Element 0 is the tool the hand starts with.")]
+        [Tooltip("In menu order. Element 0 is the tool the hand starts with.")]
         private GameObject[] tools = Array.Empty<GameObject>();
 
-        [SerializeField]
-        [Tooltip("Steps to the next tool. XRI Right Interaction has no primary button action, so this one is defined here.")]
-        private InputActionProperty switchAction;
-
-        /// <summary>The new index and the tool it activated.</summary>
+        /// <summary>The new index and the tool it activated. The tool is null while the hand is stowed.</summary>
         public event Action<int, GameObject> ToolChanged;
 
         public int ActiveIndex { get; private set; }
 
-        public GameObject ActiveTool => IsValidIndex(ActiveIndex) ? tools[ActiveIndex] : null;
+        /// <summary>True while the menu holds the hand empty. The index survives, so closing restores the same tool.</summary>
+        public bool ToolsStowed { get; private set; }
 
-        /// <summary>The tool menu step calls this instead of stepping through the list.</summary>
+        public GameObject ActiveTool => !ToolsStowed && IsValidIndex(ActiveIndex) ? tools[ActiveIndex] : null;
+
         public void SelectTool(int index)
         {
             if (!IsValidIndex(index))
@@ -41,14 +38,21 @@ namespace Sogeti.Interaction
             ToolChanged?.Invoke(ActiveIndex, ActiveTool);
         }
 
-        public void SelectNextTool()
+        /// <summary>
+        /// Empties the hand without losing the choice.
+        /// The open menu shares the right trigger with the planter and the can, so
+        /// every tool goes off. A press then reaches the UI and nothing else.
+        /// </summary>
+        public void SetToolsStowed(bool stowed)
         {
-            if (tools.Length == 0)
+            if (ToolsStowed == stowed)
             {
                 return;
             }
 
-            SelectTool((ActiveIndex + 1) % tools.Length);
+            ToolsStowed = stowed;
+            ApplyActiveTool();
+            ToolChanged?.Invoke(ActiveIndex, ActiveTool);
         }
 
         private void Awake()
@@ -57,44 +61,13 @@ namespace Sogeti.Interaction
             ApplyActiveTool();
         }
 
-        private void OnEnable()
-        {
-            InputAction action = switchAction.action;
-            if (action == null)
-            {
-                return;
-            }
-
-            action.performed += OnSwitchPressed;
-            action.Enable();
-        }
-
-        private void OnDisable()
-        {
-            InputAction action = switchAction.action;
-            if (action == null)
-            {
-                return;
-            }
-
-            action.performed -= OnSwitchPressed;
-
-            // A shared action reference belongs to the rig. Only a locally owned action is safe to disable.
-            if (switchAction.reference == null)
-            {
-                action.Disable();
-            }
-        }
-
-        private void OnSwitchPressed(InputAction.CallbackContext context) => SelectNextTool();
-
         private void ApplyActiveTool()
         {
             for (int i = 0; i < tools.Length; i++)
             {
                 if (tools[i] != null)
                 {
-                    tools[i].SetActive(i == ActiveIndex);
+                    tools[i].SetActive(!ToolsStowed && i == ActiveIndex);
                 }
             }
         }
