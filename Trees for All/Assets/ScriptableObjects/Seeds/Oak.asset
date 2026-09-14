@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Oak
   m_EditorClassIdentifier: Sogeti.Planting::Sogeti.Planting.SeedDefinition
   displayName: Oak
-  menuIcon: {fileID: 0}
+  menuIcon: {fileID: 21300000, guid: f6630dfaa2a83cf47b8ea927fbe7dfb7, type: 3}
   stages:
   - visualPrefab: {fileID: 8342448983144309027, guid: fcab16f0d26cd82dab4e96bf1ef5ecc5, type: 3}
     deathVisualPrefab: {fileID: 0}

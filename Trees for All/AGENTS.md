@@ -275,6 +275,9 @@ Nothing is verified in Play Mode.
 - `Assets/Scripts/UI/WorldUI/SelectedSeedReadout.cs`.
 - `Assets/Editor/SeedIconBaker.cs`, menu item `Trees for All/Bake Seed Icons`.
 - `PlayerRig.prefab` disables the `Jump` GameObject.
+- `Assets/Prefabs/UI/ToolMenuEntry.prefab` and `Assets/Prefabs/UI/ToolMenu.prefab`.
+  The toggle binding sits inside `ToolMenu.prefab`. Both files are hand written
+  YAML, so the first Unity import is the first real test.
 
 ### Open, all of it Editor work
 1. Swap the `EventSystem` module in `DevelopmentScene`. Remove `Input System UI
@@ -282,26 +285,17 @@ Nothing is verified in Play Mode.
    fields empty, so the built in mouse fallback stays on. Without this module the
    `m_EnableUIInteraction` flag on both interactors does nothing, and the panel
    reads as dead with no error.
-2. Build `Assets/Prefabs/UI/ToolMenuEntry.prefab`: a `Button`, a background
-   `Image`, `ToolMenuEntry`, plus `Icon`, `Label` and `SelectedMark` children.
-3. Build `Assets/Prefabs/UI/ToolMenu.prefab`: root with `ToolMenuController`,
-   child `Panel` with a world space `Canvas`, `CanvasScaler`, `GraphicRaycaster`
-   and `TrackedDeviceGraphicRaycaster`. Layer 5 on every child. RectTransform
-   400 x 300 at local scale 0.0006. A `VerticalLayoutGroup` holds a Tools row
-   and a Seeds row. Give the seed row a `GridLayoutGroup` at a fixed cell size,
-   so a fifth seed wraps with no edit. Copy the canvas setup from
-   `Assets/Samples/.../DemoSceneAssets/Prefabs/UI/Interactive Controls.prefab`,
-   but use `TextMeshProUGUI`, not the legacy `Text` in that sample.
-4. Author the toggle binding **inside** `ToolMenu.prefab`, not as a scene
-   override: `<XRController>{LeftHand}/{SecondaryButton}`, interaction `Press`.
-5. Parent `ToolMenu` under `PlayerRig > Camera Offset > Left Controller`. Start
+2. Parent `ToolMenu` under `PlayerRig > Camera Offset > Left Controller`. Start
    at local position `(0.02, 0.07, -0.05)`, rotation `(50, 180, 0)`. Tune until
    the panel faces the head. Keep `panelRoot` inactive.
-6. Add a `SeedReadout` child to `SeedPlanter.prefab` with `SelectedSeedReadout`.
+3. Set `toolSwitch` and `planter` on `ToolMenuController`. Both sit on the Right
+   Controller, outside the menu prefab, so these two stay instance overrides.
+4. Add a `SeedReadout` child to `SeedPlanter.prefab` with `SelectedSeedReadout`.
    Clear `raycastTarget` on both graphics. Fixed rotation, no billboard.
-7. Run `Trees for All/Bake Seed Icons`. Check the import settings.
-8. Run the EditMode suite. 160 cases must pass.
-9. List the baked icons in the root `README.md`.
+5. Run `Trees for All/Bake Seed Icons`. Check the import settings.
+6. Replace the placeholder sprite on the Water entry icon.
+7. Run the EditMode suite. 160 cases must pass.
+8. List the baked icons in the root `README.md`.
 
 ### Watch out
 - Use a plain parented transform. `HandMenu` needs a palm up pose, which the PC
@@ -310,6 +304,10 @@ Nothing is verified in Play Mode.
   highlight inside `Open()`.
 - The left hand also has UI interaction on. If its ray reaches its own panel,
   untick `m_EnableUIInteraction` on the left interactor in `PlayerRig.prefab`.
+- **The Tools row holds the watering can alone.** A seed pick already switches
+  the hand to the planter, so a Plant button adds nothing. `ToolMenuRow.entries`
+  maps an array position to a tool index, so slot 0 stays empty and the can sits
+  at slot 1. Keep that empty slot, or the can selects the planter.
 
 ### Done when
 The player picks a seed from the panel, the ghost changes to that seed, and the
