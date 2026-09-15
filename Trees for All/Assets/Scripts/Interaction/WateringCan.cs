@@ -71,10 +71,20 @@ namespace Sogeti.Interaction
         [SerializeField]
         private ParticleSystem stream;
 
+        [SerializeField]
+        [Tooltip("Loops while the can pours. Its clip should already be set to loop.")]
+        private AudioSource pourAudioSource;
+
+        [SerializeField]
+        [Tooltip("Plays once when the spout enters the pond and once when it leaves.")]
+        private AudioSource dipAudioSource;
+
         private readonly Collider[] plantBuffer = new Collider[MaxPlantsInRange];
         private WaterTank tank;
         private bool isStreaming;
         private bool hasStreamState;
+        private bool isSubmerged;
+        private bool hasSubmergedState;
 
         /// <summary>How much water is left, 0 to 1. The level bar reads this.</summary>
         public float Fill01 => tank == null ? 0f : tank.Fill01;
@@ -139,7 +149,9 @@ namespace Sogeti.Interaction
                 CurrentTarget.ApplyWaterFlow(CurrentFlow01);
             }
 
-            if (IsSpoutInWater())
+            bool spoutInWater = IsSpoutInWater();
+            SetSubmerged(spoutInWater);
+            if (spoutInWater)
             {
                 tank.Refill(refillPerSecond, deltaTime);
             }
@@ -224,7 +236,7 @@ namespace Sogeti.Interaction
         // Driven by the served flow, not by the tilt. An empty can that still sprays reads as a bug.
         private void SetStreaming(bool streaming)
         {
-            if (stream == null || (hasStreamState && isStreaming == streaming))
+            if (hasStreamState && isStreaming == streaming)
             {
                 return;
             }
@@ -234,12 +246,42 @@ namespace Sogeti.Interaction
 
             if (streaming)
             {
-                stream.Play();
+                if (stream != null)
+                {
+                    stream.Play();
+                }
+
+                if (pourAudioSource != null)
+                {
+                    pourAudioSource.Play();
+                }
             }
             else
             {
-                stream.Stop();
+                if (stream != null)
+                {
+                    stream.Stop();
+                }
+
+                if (pourAudioSource != null)
+                {
+                    pourAudioSource.Stop();
+                }
             }
+        }
+
+        // Edge detected like SetStreaming, but this fires the dip sound once per entry and once per exit.
+        private void SetSubmerged(bool submerged)
+        {
+            if (dipAudioSource == null || (hasSubmergedState && isSubmerged == submerged))
+            {
+                return;
+            }
+
+            isSubmerged = submerged;
+            hasSubmergedState = true;
+
+            dipAudioSource.Play();
         }
 
         private void OnValidate()
