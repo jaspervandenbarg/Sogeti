@@ -2,9 +2,29 @@
 
 Please refer to the "Opdrachtomschrijving XR developer Sogeti.pdf" for the assignment.
 
+## Notes and Disclaimers
+1. This project was build by `Jasper van den Barg` with the help of `AI agents`
+2. There was no access to VR hardware or a Quest 3 during the development so all testing was done in the Unity editor.
+3. Decisions were made based on the point 2.
+
+## Design Decisions
+
+# Gameplay Decisions
+1. UI was designed based on testing limitations so menus and time/score is wrist bound because HUD positioning could not be tested properly.
+2. Controls are also based on testing limitations. `Controllers` were picked over `Hands` so there are no grabables because this was difficult for testing.
+   Planting seeds is done through a Ray to help with testing.
+   Watering can is locked to controller to help with testing.
+   Movement is done through teleportation.
+
+# Technical Decisions
+1. 
+
 ## How to play
 
-Test the game on PC with a mouse and keyboard. No headset is needed.
+# Testing on Quest 3
+Build the project and install the apk on the Quest 3
+
+# Testing the game on PC with a mouse and keyboard. No headset is needed.
 
 **Start**
 1. A panel spawns in front of you. Aim at it with `Y`, the right hand ray
@@ -16,9 +36,10 @@ Test the game on PC with a mouse and keyboard. No headset is needed.
 
 **Move**
 1. Hold the right mouse button to look around.
-2. Press `T`, then `1`, to aim the teleport arc.
+2. Press `T` to aim the teleport arc.
 3. Hold `W` to raise the arc. Release `W` to teleport.
-4. Press `1` again to walk.
+4. Press `1` to toggle between controller input and walking.
+5. Press `R` to toggle between translation and rotation.
 
 **Pick a tool or a seed**
 1. Press `T`, then `N`, to open the menu on the left wrist. This hides the HUD.
@@ -33,8 +54,7 @@ Test the game on PC with a mouse and keyboard. No headset is needed.
 
 **Water a plant**
 1. Pick the watering can from the menu.
-2. Hold `Left Ctrl` and move the mouse to tilt the can over a plant.
-3. Tilt past 45 degrees to pour.
+3. Tilt past 30 degrees to pour.
 4. Dip the spout in the pond to refill the can.
 
 **Goal**
@@ -61,7 +81,6 @@ Twinkle sounds for tree growth
 
 Watering sound
 - https://freesound.org/people/wobesound/sounds/488401/
-- https://freesound.org/people/swemcps/sounds/721357/
 - https://freesound.org/people/wyronroberth/sounds/516257/ 
 
 Made for this project, not third party.

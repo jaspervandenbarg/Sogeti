@@ -28,6 +28,11 @@ namespace Sogeti.Planting
         [Tooltip("Layer a dead plant moves to when it stops blocking.")]
         private int deadPlantLayer = IgnoreRaycastLayer;
 
+        [Header("Feedback")]
+        [SerializeField]
+        [Tooltip("Plays once on planting and once on every stage advance.")]
+        private AudioSource growAudioSource;
+
         private SeedDefinition seed;
         private PlantGrowth growth;
         private GameObject currentVisual;
@@ -76,6 +81,7 @@ namespace Sogeti.Planting
 
             ShowStageVisual(growth.CurrentStageIndex);
             enabled = growth.HasWaterMeter;
+            PlayGrowSound();
 
             Planted?.Invoke(this, definition.PointsForPlanting);
         }
@@ -117,7 +123,16 @@ namespace Sogeti.Planting
             int award = GrowthPoints.Award(seed.GetStage(stageIndex - 1), secondsInPreviousStage);
 
             ShowStageVisual(stageIndex);
+            PlayGrowSound();
             StageAdvanced?.Invoke(this, award);
+        }
+
+        private void PlayGrowSound()
+        {
+            if (growAudioSource != null)
+            {
+                growAudioSource.Play();
+            }
         }
 
         private void OnDied(int stageIndex)
