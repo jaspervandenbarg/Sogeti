@@ -21,7 +21,7 @@ namespace Sogeti.Interaction
 
         [Header("Spout")]
         [SerializeField]
-        [Tooltip("The mouth of the can. The pour test and the refill test both run from here.")]
+        [Tooltip("The mouth of the can. The pour test and the refill test both run from here. It must sit below the tilt reference before the can pours.")]
         private Transform spout;
 
         [SerializeField]
@@ -42,7 +42,7 @@ namespace Sogeti.Interaction
 
         [Header("Pouring")]
         [SerializeField]
-        [Tooltip("Its up axis must point out of the top of the can. The imported mesh carries a baked rotation, so the root axes may not match the model.")]
+        [Tooltip("The body of the can. Its up axis must point out of the top. The imported mesh carries a baked rotation, so the root axes may not match the model.")]
         private Transform tiltReference;
 
         [SerializeField]
@@ -182,8 +182,12 @@ namespace Sogeti.Interaction
                 return 0f;
             }
 
-            // The can's own up axis, so the reading follows the wrist and not the head.
-            float tilt = Vector3.Angle(tiltReference.up, Vector3.up);
+            // The can's own axes, so the reading follows the wrist and not the head.
+            float tilt = PourFlow.SpoutTiltDegrees(
+                tiltReference.up,
+                spout.position.y,
+                tiltReference.position.y);
+
             return PourFlow.For(tilt, pourStartAngle, pourFullAngle);
         }
 

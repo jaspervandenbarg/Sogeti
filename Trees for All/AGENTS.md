@@ -335,6 +335,9 @@ per-instance state.
   `occluderMask`, so either would block the player's own rays.
 - `WateringCan.tiltReference` compensates for the imported mesh's baked
   rotation; point it at a transform whose up axis leaves the top of the can.
+- The tilt angle alone is direction-blind, so a can tilted up reads the same as
+  one tilted down. `PourFlow.SpoutTiltDegrees` also asks whether `spout` sits
+  below `tiltReference` in world height, and only that pair pours.
 
 ### Tool and seed menu
 - `SeedIconBaker` (`Assets/Editor/`) passes `allowScriptableRenderPipeline:

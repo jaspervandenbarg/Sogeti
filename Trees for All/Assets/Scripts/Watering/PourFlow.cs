@@ -16,6 +16,24 @@ namespace Sogeti.Watering
         public const float DefaultFullDegrees = 90f;
 
         /// <summary>
+        /// The tilt that pours, in degrees.
+        /// Water leaves through the spout only while the mouth sits below the body of
+        /// the can, so a can tilted up reads as 0 and holds its water.
+        /// </summary>
+        /// <param name="canUp">The up axis of the can. It points out of the top.</param>
+        /// <param name="spoutHeight">World height of the mouth of the can.</param>
+        /// <param name="bodyHeight">World height of the body of the can.</param>
+        public static float SpoutTiltDegrees(Vector3 canUp, float spoutHeight, float bodyHeight)
+        {
+            if (spoutHeight >= bodyHeight)
+            {
+                return 0f;
+            }
+
+            return Vector3.Angle(canUp, Vector3.up);
+        }
+
+        /// <summary>
         /// Maps the angle between the can's up axis and world up to a 0 to 1 throttle.
         /// </summary>
         /// <returns>0 while the can is upright, ramping to 1 at the full angle.</returns>
