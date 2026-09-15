@@ -17,8 +17,8 @@ and grows trees inside a limited play space.
 - Repo host: GitHub
 - Company name: `Sogeti`
 
-Teleport and planting work in Play Mode. Plants grow and die, but nothing on
-screen shows the growth yet. See `## Progress` at the end of this file for the
+Teleport, planting, the water meter, and the watering can all work and are
+verified in Play Mode. See `## Progress` at the end of this file for the
 current state.
 
 - Work scene: `Assets/Scenes/DevelopmentScene.unity`.
@@ -92,7 +92,9 @@ not mix the two.
 
 | Layer | Meaning | Blocks teleport | Blocks planting |
 | --- | --- | --- | --- |
+| 2 `Ignore Raycast` | Non-interactive world UI. The water meter and the can level bar. Also the layer a dead plant moves to. | no | no |
 | 3 `Terrain` | The only surface to stand on and plant on. Carries the `TeleportationArea`. | no, it is the target | no |
+| 5 `UI` | Interactive uGUI. The tool menu panel and the seed readout. | only with a collider | only with a collider |
 | 4 `Water` | Visual water and the watering can refill trigger. Colliders here are triggers. | no, the pond body blocks instead | yes |
 | 6 `PlayerObstacle` | Blocks the player only. Pond body, boundary walls. | yes | no |
 | 7 `UniversalObstacle` | Blocks the player and placement. Rocks, scenery, props. | yes | yes |
@@ -108,6 +110,18 @@ Rules:
 - Obstacles carry no XRI interactable component.
 - Planting is an allow list on `Terrain`. Refuse any other hit. This covers
   water, rocks, and the pond body with one rule.
+- The teleport raycast mask and the planting `occluderMask` cover the same layers.
+  `occluderMask` is 233 and the teleport mask is 2147483881, which is 233 plus the
+  XR Simulation bit. No layer blocks the player and passes the planting ray.
+- The player camera culls layer 8 `Overlay UI`. The scene overrides the culling
+  mask to 4294967039. Only an `OVROverlayCanvas` draws there. World UI the camera
+  must draw belongs on layer 2 or layer 5.
+- **A clickable canvas belongs on layer 5, never on layer 2.** The Near-Far
+  Interactor hands its own mask to the UI raycast, and
+  `Left_NearFarInteractor.prefab` sets `m_RaycastMask.m_Bits: 2147483689`. That
+  covers layers 0, 3, 5 and 31 only. A panel on layer 2 never receives a hit.
+- Layer 5 sits inside `occluderMask` and the teleport mask, but a Canvas carries
+  no collider. Both masks gate colliders, so a panel there blocks no ray.
 - Pass `QueryTriggerInteraction.Ignore` in every gameplay raycast.
   `Physics.queriesHitTriggers` is on, and the pond refill trigger overlaps the
   ground.
@@ -158,6 +172,7 @@ root, not next to `Assets/`.
 ## Comment / Documentation style
 - Write comments that explain "why". A few high level comments explaining the purpose of classes or methods is very helpful. Comments explaining tricky code are also helpful.
 - Avoid comments that are redundant with the code. Do not comment before each line of code explaining what it does unless there is something that is not obvious going on.
+- Don't mention yourself or agents.md in commit messages
 
 ## Things to avoid
 - Don't add third-party assets without asking.
@@ -170,10 +185,18 @@ root, not next to `Assets/`.
 Keep this current. It saves a rediscovery pass at the start of the next session.
 
 ### Assemblies
-- `Sogeti.Planting` (`Assets/Scripts/Planting/`) is the only asmdef in `Assets/`.
-  It holds data and rules. It references no package. The EditMode tests force it.
+- `Sogeti.Planting` (`Assets/Scripts/Planting/`) holds the planting data and
+  rules. It references no package. The EditMode tests force it.
+- `Sogeti.Watering` (`Assets/Scripts/Watering/`) holds the pour rules, for the
+  same reason. `PourFlow` and `WaterTank` need no scene and no package.
+- `Sogeti.Game` (`Assets/Scripts/Game/`) holds the round rules: the clock, the
+  score, the clock format and the phase machine. It references `Sogeti.Planting`
+  alone, because `ScoreTally` keys its per-seed rows by `SeedDefinition`. Both
+  assemblies are package-free, so the EditMode tests still run with no headset.
+  Adding a package here would pull it into the test assembly for no gain.
 - All other gameplay code compiles into `Assembly-CSharp`. That assembly
-  auto-references `Sogeti.Planting`, so glue code needs no new asmdef.
+  auto-references `Sogeti.Planting` and `Sogeti.Game`, so glue code needs no new
+  asmdef.
 - Code that needs a package (Input System, TextMesh Pro, XRI) belongs in
   `Assembly-CSharp`. Adding those references to `Sogeti.Planting` would pull
   packages into the test assembly for no gain.
@@ -214,6 +237,9 @@ Put a new rule in layer 2, where a test can reach it without a headset.
 - Users can water the trees using a watering can
 - - Users tilt the watering can over/next to the trees to water the trees.
 - - Optional: the watering can empties when pouring, refill using a pond or tap.
+- The user sees which seed is selected
+- - A visual on the hand or in the menu. Today the first seed is preselected and
+- - nothing names it.
 - The user gets points for each tree stage reached per tree
 - - the longer it takes to reach a stage the fewer points the user receives.
 - - later stages provide more points e.g. seed -> +10 points, sprout -> +20 points, fully grown tree +40
@@ -223,39 +249,10 @@ Put a new rule in layer 2, where a test can reach it without a headset.
 - - Show Restart button
 
 ## Next Step Claude progress (overwrite when finished)
-**Show growth in the scene: the water meter UI above each plant.**
-
-Planting is built and verified. `Plant` already swaps the stage visual and the
-death visual, so a neglected seed does turn into dry branches on screen. The
-player just cannot see it coming. Do not re-plan the growth rules, they live in
-`PlantGrowth` and are tested.
-
-### Goal
-The player reads, at a glance, which plant needs water and how urgent it is.
-
-### Decisions already made, do not re-open
-- The meter belongs to the plant root, not to the stage prefab.
-- `Plant.HasWaterMeter` is the only switch. A dead or fully grown plant hides it.
-- The meter faces the player on the yaw axis only. Tilting world space UI
-  towards the headset reads as unstable in VR. Copy `PlantingPreview`.
-- `Plant` exposes `Water01`. The meter reads it. It never owns the number.
-
-### Build
-1. A `PlantWaterMeter` component under `Assets/Scripts/UI/WorldUI/`.
-2. A meter prefab, parented to the `Plant` prefab root, above the visual anchor.
-3. Colour the fill by urgency, so a dying plant reads from across the field.
-
-### Ask the user first
-1. Does every plant show a meter always, or only inside a look or aim range?
-2. Does a dead plant stay in the world, or fade out after a few seconds?
-
-### Done when
-The player plants a seed and watches the meter drain, so the death at 15 s is
-readable in advance instead of a surprise. Verify in Play Mode with the
-simulator.
-
-### Not in this step
-The watering can, the tool menu, the score display, the timer, the intro UI.
+Backlog complete. Polish only. Every step in `### Build order` is done and
+verified in Play Mode, including the intro UI, which the start panel covers.
+`## How to play` in `README.md` at the git root still wants the round length,
+the start panel, and the restart added.
 
 ## Progress
 Update this section at the end of every step. Keep one line per step.
@@ -270,17 +267,352 @@ watering can, scoring, timer and end screen, intro UI.
 
 ### Status
 - **Teleport: done, verified in Play Mode, left hand only.** The right hand
-  plants now. All 7 checks under `### Teleport step, what "verified" means`
-  passed.
+  plants now.
 - **Seed and tree data model: done.** See `### Seed data model step, done`.
 - **Planting: done, verified in Play Mode.** See `### Planting step, done`.
-- Growth stages: `Plant` swaps the stage visual and the death visual, verified
-  in Play Mode. The water meter UI is not started. See `## Next Step`.
-- Tool and seed menu: not started.
-- Watering can: not started.
-- Scoring: not started.
-- Timer and end screen: not started.
-- Intro UI: not started.
+- **Growth stages: done, verified in Play Mode.** The stage visual, the death
+  visual and the water meter all passed. See `### Water meter step, built`.
+- **Watering can: done, wired into the rig, verified in Play Mode.** See
+  `### Watering can step, built`.
+- **Tool and seed menu: done, verified in Play Mode.** See
+  `### Tool and seed menu step, done`.
+- **Scoring: done, verified in Play Mode.** See
+  `### Timer and end screen step, done`.
+- **Timer and end screen: done, verified in Play Mode.** Same section.
+- **Intro UI: done, verified in Play Mode.** The start panel covers it.
+
+### HUD wrist binding, code done — needs scene wiring
+The HUD moved from a head-follow panel to the left wrist, sharing `ToolMenu`'s
+spot: opening the tool menu hides the HUD, closing it shows the HUD again, so
+exactly one is ever visible. `HudFollow` is deleted. `GameHud.prefab`'s root
+now carries a fixed wrist offset, position `(0, 0.1, 0.05)`, rotation `-10`
+about X — the same numbers as `ToolMenu`'s instance override in
+`PlayerRig.prefab`, so the two panels sit in the same spot.
+
+New type: `HudMenuLink` (`Assets/Scripts/UI/ToolMenu/`), added to
+`ToolMenu.prefab`'s root next to `ToolMenuController`, not to `GameHud`'s
+root.
+
+Rule later steps must not re-derive:
+- **A listener that toggles a GameObject must not live on that GameObject.**
+  `HudMenuLink` subscribes to `ToolMenuController.OpenChanged` and sets
+  `hudRoot.SetActive(!open)`. Putting that subscription on `GameHud`'s own
+  root would unsubscribe on the very `SetActive(false)` it triggers, so the
+  next `OpenChanged(false)` — the menu closing — would have no listener left
+  to show the HUD again. `ToolMenu`'s root GameObject is never deactivated
+  (only `panelRoot`, a child, and `ToolMenuController.enabled`), so it is the
+  safe host.
+
+Scene wiring still needed (not done by editing files alone):
+1. In `DevelopmentScene.unity`, reparent the `GameHud` instance from
+   `PlayerRig > Camera Offset` to `PlayerRig > ... > Left Controller`, the
+   same parent as `ToolMenu`. The prefab's own local offset already matches
+   `ToolMenu`'s slot.
+2. On the scene's `ToolMenu` instance, drag the scene's `GameHud` object into
+   the new `HudMenuLink.Hud Root` field.
+3. `PlayerActionGate.objectsToDeactivate`'s `GameHud` entry survives the
+   reparent untouched — it is an object reference, not a hierarchy path.
+
+### Timer and end screen step, done
+A round clock, a score, a head HUD, and one world panel that serves both the
+start screen and the game over screen. Code in `Assets/Scripts/Game/`,
+`Assets/Scripts/Session/`, `Assets/Scripts/UI/Hud/` and
+`Assets/Scripts/UI/Panels/`.
+
+Design answers from the user:
+- **A head-locked HUD with a soft follow.** Up and left of centre, 1.2 m deep.
+  A rigid head lock puts text at the lens edge, where it blurs and strains the
+  eyes. Superseded later by a wrist-bound HUD — see
+  `### HUD wrist binding, code done — needs scene wiring`.
+- **The seed readout stays on the right hand.** The HUD carries global state,
+  the hand carries hand state. `SelectedSeedReadout` is a child of `SeedPlanter`,
+  so it already leaves with the can. A HUD copy would re-implement that.
+- **The round is a serialized field, default 180 s.**
+- **Restart reloads the scene.** Fresh by construction, so no reset list can rot.
+- **Restart returns to the start panel.** A reload cannot carry a "skip the
+  intro" flag without persistence, and the user asked for no saved state.
+  `GameSession.autoStartOnLoad` flips this if the extra press annoys.
+- **The start panel leads with the goal**, then `Controls`, then `Play` last.
+- **The game over panel lists one row per seed type**, with grown and planted
+  counts.
+
+New types:
+- `GameCountdown`, `ScoreTally`, `SeedTally`, `CountdownDisplay`, `GamePhase`,
+  `GamePhaseRules`. All pure, all in `Sogeti.Game`.
+- `GameSession`, `ScoreCollector`, `PlayerActionGate`, `GameRestarter`.
+- `GameHud`, `GamePanelView`, `GamePanelController`, `WorldPanelPlacer`.
+
+Rules that later steps must not re-derive:
+- **`ControllerInputActionManager.enabled = false` is a clean teleport gate.**
+  Its `OnDisable` only calls `TeardownInteractorEvents()`, so `OnStartTeleport`
+  can never fire. Its `OnEnable` forces the Teleport Interactor GameObject
+  inactive, so re-enabling self-heals. Do not restore that interactor by hand.
+- **The gate still deactivates the left Teleport Interactor.** A player holding
+  the teleport stick as the clock expires leaves a live arc, because the
+  postponed deactivate in `Update` never runs on a disabled manager.
+- **On the resume path, activate GameObjects before enabling Behaviours.**
+  `ControllerInputActionManager.OnEnable` deactivates the teleport interactor.
+  The reverse order revives a live interactor with nothing driving it.
+- **`ToolMenuController.Close()` un-stows the hand.** `SetOpen` calls
+  `SetToolsStowed(open)`. So the gate closes the menu first, then stows. The
+  reverse order hands the player a live planter behind the game over panel.
+- **`SeedPlanter.PlantPlaced` is the only planting hook.** `Plant.Planted`
+  carries the same award and fires first, inside `Initialize`. Reading both
+  counts every seed twice.
+- **The HUD sits on layer 2 and carries no raycaster.** A raycaster 1.2 m from
+  the eyes would eat the right hand ray. The panel is clickable, so it sits on
+  layer 5 with both raycasters. See `## Layer conventions`.
+- **`GameSession` raises the clock on whole seconds only.** A per-frame raise
+  rebuilds the TMP mesh 90 times a second for a clock with no decimals.
+- `GameSession.StartRound` resets the tally before it raises `PhaseChanged`.
+  That event un-hides the HUD, and a HUD showing the old score for one frame
+  reads as a failed restart.
+- The panel places itself one frame after the request. The head pose is not
+  settled on the frame a scene loads. `PlantWaterMeter` skips a frame for the
+  same reason.
+- A world-space Canvas faces **away** from the viewer.
+  `WorldUILookAtPlayer.rotationOffset` stays `0,180,0` on the panel, or the
+  text mirrors.
+- Plants keep growing after the round ends, on purpose. It looks alive behind
+  the panel. `ScoreCollector` drops every award unless the phase is `Playing`.
+
+Tests: `GameCountdownTests`, `ScoreTallyTests`, `CountdownDisplayTests` and
+`GamePhaseRulesTests`, 70 new cases. **241 total, all green**, run in batch mode
+against Unity 6000.3.24f1.
+
+**Wired into the rig and verified in Play Mode.** See
+`### Timer step, scene wiring` for the field list a rebuilt rig would lose.
+
+### Timer step, scene wiring
+Facts about the rig and the scene. A rebuilt rig or a re-dragged prefab
+instance loses all of these.
+
+1. `GameSession` sits on its own root GameObject, named `GameSession`, next to
+   `ScoreCollector`, `PlayerActionGate`, `GameRestarter` and
+   `GamePanelController`. All five live on that one GameObject.
+2. **`GamePanel.prefab` starts active. `GameHud.prefab` starts inactive.**
+   `GamePanelController` and `GamePanelView` live on the `GamePanel` root, and
+   `GamePanelView.Awake()` already hides its own child `Panel` canvas. A root
+   set inactive in the Inspector never runs that `Awake`, never subscribes to
+   `GameSession.PhaseChanged`, and so can never show itself again. `GameHud`
+   has no such self-managed visibility: its root is the thing
+   `PlayerActionGate.objectsToDeactivate` turns on and off directly, so it
+   alone starts inactive. Getting this backwards was the one bug scene wiring
+   found: an inactive `GamePanel` means the start screen never appears and the
+   game never starts.
+3. `GameHud.prefab` sits under `PlayerRig > ... > Left Controller`, the same
+   wrist anchor as `ToolMenu`, at the same local offset. See
+   `### HUD wrist binding, code done — needs scene wiring`.
+4. `PlayerActionGate.behavioursToSuspend` holds three: `Left Controller >
+   Controller Input Action Manager`, `Locomotion > Move > Dynamic Move
+   Provider`, `Locomotion > Turn > Snap Turn Provider`.
+5. `PlayerActionGate.objectsToDeactivate` holds two: `Left Controller >
+   Teleport Interactor` and the `GameHud` root.
+6. `PlayerActionGate.toolSwitch` is the `RightHandToolSwitch` on `Right
+   Controller`. `.toolMenu` is the `ToolMenuController` on `Left Controller >
+   ToolMenu`.
+7. `GamePanelController.playerHead` points at `PlayerRig > Camera Offset >
+   Main Camera`.
+8. `ScoreCollector.planter` points at the `SeedPlanter` on `Right Controller`,
+   the one source `PlayerActionGate` never has to touch directly, because
+   `RightHandToolSwitch.SetToolsStowed` already empties that hand.
+9. `GameSession.roundSeconds` is `180`. `autoStartOnLoad` stays unticked, so a
+   restart returns to the start panel rather than skipping it.
+
+Tests: `Assets/Tests/EditMode/`, unaffected by scene wiring. **241 total**,
+still green after the wiring pass.
+
+### Timer and end screen prefabs, built
+`Assets/Prefabs/UI/GamePanel.prefab` and `Assets/Prefabs/UI/GameHud.prefab`,
+hand-authored YAML like `ToolMenu.prefab`. Both import clean and every
+reference inside them resolves.
+
+- `GamePanel` is layer 5. The root carries `WorldPanelPlacer`,
+  `WorldUILookAtPlayer`, `GamePanelView` and `GamePanelController`. The child
+  `Panel` holds the world Canvas, both raycasters and the three groups.
+  640 x 560 at scale 0.0015, so it reads about 25 degrees wide at 2 m.
+- `GameHud` is layer 2 and carries no raycaster. The root carries `GameHud`
+  alone; its Transform holds the fixed wrist offset instead of a follow
+  component. The child `Panel` is 280 x 100 at scale 0.001.
+- The game over rows reuse `ToolMenuEntry.prefab` in a `GridLayoutGroup`, two
+  columns of 260 x 96. A narrower cell clips `Broadleaf 1 grown / 2 planted`.
+
+Rules that later steps must not re-derive:
+- **`GamePanelView` sits on the always-active root, not on `panelRoot`.** Its
+  `Awake` hides `panelRoot`. A view living on that hidden canvas would run
+  `Awake` on the frame `ShowStart` activates it, and hide itself again.
+  `ToolMenuController` sits on its root for the same reason.
+- **Each screen is a full-stretch group, and the action button anchors to the
+  bottom edge.** Play, Back and Play again then land in the same spot, so the
+  panel height can change without moving the primary action.
+
+Scene fields left empty on purpose: `GamePanelController.session`, `.gate`,
+`.restarter`, `.playerHead`, and `GameHud.session`.
+
+### Tool and seed menu step, done
+The player opens a left wrist panel, picks a seed or the watering can, and the
+readout names the pick at the right hand. Code in
+`Assets/Scripts/UI/ToolMenu/`, `Assets/Scripts/UI/WorldUI/`, and
+`Assets/Editor/SeedIconBaker.cs`.
+
+Design answers from the user:
+- **A left wrist panel.** The left secondary button (Y, key `N`) opens and
+  closes it. The Quest system owns the left menu button, so that stays free.
+- **The right hand ray picks an entry.** The open panel stows every right hand
+  tool, so the right trigger drives UI only.
+- **Two labelled rows.** A Tools row and a Seeds row. Each entry shows an icon
+  and a name.
+- **A seed readout on the right hand, no tool readout.** The player already
+  sees the planter or the can.
+- **The panel stays open until Y.** A pick does not close it.
+- **One mark at a time.** The hand holds one tool, so the panel lights one
+  entry. The seed row goes dark while the can is out. `SelectedSeed` survives,
+  so returning to the planter restores the same seed.
+- **Jump is off.** The menu removed the B button, which left B on Jump. The
+  game stays teleport only, for comfort.
+
+New types:
+- `SeedCatalog`, a ScriptableObject listing the four seeds. `SeedPlanter` and
+  the menu both read it, so no second seed list can drift from the spacing
+  rules.
+- `RightHandToolSwitch.SetToolsStowed(bool)`. `ActiveIndex` survives a stow, so
+  closing the menu restores the same tool.
+- `ToolMenuEntry`, `SeedMenuRow`, `ToolMenuRow`, `ToolMenuController`.
+- `SelectedSeedReadout`.
+- `SeedIconBaker`, menu item `Trees for All/Bake Seed Icons`.
+
+Rules that later steps must not re-derive:
+- **`PreviewRenderUtility.Render()` defaults to the built-in pipeline.** The
+  first argument is `allowScriptableRenderPipeline`, default false. URP
+  SubShaders tag `"RenderPipeline" = "UniversalPipeline"`, so nothing matches
+  and Unity draws the magenta error shader over correct geometry.
+  `SeedIconBaker` passes `true`. Never drop that argument.
+- **Frame an icon against mesh renderers only.** `WateringCanPrefab` carries a
+  Particle System, and an idle `ParticleSystemRenderer` reports bounds far
+  larger than its emitter. `SeedIconBaker.CollectMeshRenderers` filters and
+  disables the rest.
+- **The tool row entries carry authored art, the seed row does not.**
+  `SeedMenuRow` builds its entries from the catalog and calls `SetContent`.
+  `ToolMenuRow` reuses entries placed in `ToolMenu.prefab`, so a tool icon is a
+  prefab instance override on the entry's `Icon` image, not a code assignment.
+- **The Tools row holds the watering can alone.** A seed pick already switches
+  the hand to the planter, so a Plant button adds nothing. `ToolMenuRow.entries`
+  maps an array position to a tool index, so slot 0 stays empty and the can
+  sits at slot 1. Keep that empty slot, or the can selects the planter.
+- The left hand also has UI interaction on. Untick `m_EnableUIInteraction` on
+  the left interactor in `PlayerRig.prefab`, or its ray hits its own panel.
+- The rows build on first activation, so `ToolMenuController` refreshes the
+  highlight inside `Open()`.
+- Use a plain parented transform for the panel, not `LazyFollow`. `HandMenu`
+  needs a palm-up pose, which the PC simulator cannot hold, and a tween would
+  blur a pass or fail check.
+- The scene `EventSystem` needs `XR UI Input Module`, not `Input System UI
+  Input Module`, with empty action fields so the mouse fallback stays on.
+  Without it, `m_EnableUIInteraction` does nothing and the panel reads as dead
+  with no error.
+
+Tests: EditMode suite, 160 total.
+
+**Verified in Play Mode.** The player picks a seed from the panel, the ghost
+changes to that seed, and the readout names it at the right hand.
+
+### Watering can step, built
+The player tilts a can over a plant and the meter rises. Code in
+`Assets/Scripts/Watering/`, `Assets/Scripts/Interaction/` and
+`Assets/Scripts/UI/WorldUI/`.
+
+Design answers from the user:
+- **The right hand carries every tool.** Planting, watering and refilling. The
+  left hand keeps teleport only.
+- **The right primary button swaps the tool.** Seeds or can, never both.
+- **Limited charge.** About 10 seconds of full pour. Dip the spout in the pond.
+- **Tilt pours.** `requireTriggerToPour` on the can prefab adds the trigger, so
+  the developer can compare both. Default is tilt alone.
+
+New types:
+- `PourFlow`, static and pure. Tilt degrees to a 0 to 1 throttle.
+- `WaterTank`, a plain class. Charge measured in seconds of full pour.
+- `RightHandToolSwitch`, the scene component that keeps one tool active.
+- `WateringCan`, the scene component. It only ever calls `Plant.ApplyWaterFlow`.
+- `WateringCanLevelMeter`, the bar printed on the can.
+
+Rules that later steps must not re-derive:
+- **One tool is active at a time, so the shared right trigger no longer clashes.**
+  The planter GameObject is off while the can is out. This closes the entry that
+  used to sit in `### Known issues, parked`. Keep it that way, or a grabbable can
+  will plant a seed on the press that pours.
+- ~~The tool switch action is defined inline on the component.~~ The button is
+  gone. The tool menu replaced it. `SelectTool(int)` is the only switch path.
+- **The pond refill is a `Physics.CheckSphere` against layer 4, not a trigger
+  callback.** A hand held can has no Rigidbody, so `OnTriggerStay` never fires.
+- Watering targets the nearest plant with `HasWaterMeter`. A dead plant is
+  already excluded, because it moves to layer 2. Do not add a filter.
+- **The can prefab shipped with a Rigidbody and a convex `MeshCollider`.** Both
+  are removed. A non-kinematic Rigidbody fights a parented transform, and layer 0
+  sits inside `occluderMask`, so the can would stop the player's own rays.
+- **The imported mesh carries a baked rotation.** `WateringCan.tiltReference`
+  exists for that. Point it at a transform whose up axis leaves the top of the
+  can, or the tilt reads the wrong angle.
+- `Sogeti.Watering` is the second asmdef. Pure rules go there so EditMode tests
+  reach them, and `Sogeti.Planting` stays about planting.
+
+Tests: `Assets/Tests/EditMode/PourFlowTests.cs` and `WaterTankTests.cs`,
+25 new cases. 160 total.
+
+**Wired into the rig and verified in Play Mode.** `RightHandToolSwitch` sits on
+`PlayerRig > Camera Offset > Right Controller` with the `SeedPlanter` and the
+watering can in its `tools` array. Tool swap, tilt pour, plant drinking, the
+dry-out, and the pond refill all pass, with `requireTriggerToPour` ticked and
+unticked.
+
+### Water meter step, built
+A bar and a droplet float above every living plant. Code in
+`Assets/Scripts/Planting/` and `Assets/Scripts/UI/WorldUI/`.
+
+Design answers from the user:
+- **Range gated.** A meter shows inside 15 m and hides past 16 m. Two distances,
+  because one threshold flickers while the player stands on the edge.
+- **A dead plant stays visible and stops blocking.** Tick
+  `Plant.blocksPlacementWhenDead` to get the old behaviour and compare the two.
+- **A bar plus a droplet.** The droplet pulses on the critical band only.
+
+New types:
+- `WaterUrgency`, an enum with `Healthy`, `Low` and `Critical`.
+- `WaterUrgencyBands`, static and pure. It maps `Water01` to a band.
+- `PlantWaterMeter`, the scene component. It reads `Plant.Water01` and
+  `Plant.HasWaterMeter`. It owns neither.
+
+New assets:
+- `Assets/Prefabs/Plants/Plant.prefab` gains a `WaterMeter` child on the root,
+  a sibling of `Visual`. Every stage swap destroys the contents of `Visual`.
+- `Assets/Materials/UI/`, five URP Unlit materials. All have `_Cull` off.
+- `Assets/Textures/UI/Droplet.png`, project placeholder art, not third party.
+
+Rules that later steps must not re-derive:
+- **The player camera culls layer 8.** A meter there renders nowhere. Layer 2 is
+  the one layer the camera draws that no gameplay mask reads. See
+  `## Layer conventions`.
+- **A spacing rule alone cannot free a dead plant's spot.** The plant capsule is
+  layer 7, and layer 7 sits inside `occluderMask`. The planting ray is refused
+  before `PlantingRules.CheckSpacing` runs. `Plant` moves the whole hierarchy to
+  layer 2 on death instead. `NeighbourPlant` and `PlantingRules` stay unchanged.
+- The same move stops the husk blocking teleport. The two masks are the same
+  layers, so no layer separates the two cases.
+- The toggle applies at death. Restart Play Mode after you change it.
+- `WorldUILookAtPlayer` runs the billboard. `rotationOffset` is `0, 180, 0`, so
+  the quad front faces the player and the bar does not drain the wrong way.
+- The fill swaps `sharedMaterial` per band. A `MaterialPropertyBlock` would drop
+  the renderer out of the SRP batcher, one extra draw call per plant.
+- `PlantWaterMeter` reads the `CameraPosition` atom, not `Camera.main`. It skips
+  the first frame, while the atom still holds the origin.
+- Stage 3 has no meter, so the meter only ever sits above grass or a shrub. A
+  fixed height of 1.2 m clears both.
+
+Tests: `Assets/Tests/EditMode/WaterUrgencyBandsTests.cs`, 16 new cases. 135 total.
+
+**Verified in Play Mode.** The meter appears, drains through green/amber/red
+with the droplet pulse, hides on death, respects the 15/16 m range, faces the
+player, and the `blocksPlacementWhenDead` toggle behaves as designed.
 
 ### Planting step, done
 Runtime code in `Assets/Scripts/Planting/` and `Assets/Scripts/Interaction/`.
@@ -348,22 +680,6 @@ Four facts about the rig. A rebuilt rig loses all four.
 4. `Ray Origin` is empty on the planter, so it falls back to its own transform.
    Do not wire `Right Controller Teleport Stabilized Origin`. That stabilizer
    aims against the teleport interactor, which this hand no longer runs.
-
-### Planting step, what "verified" means
-The checks that closed the step. Re-run them if planting regresses.
-
-1. **Ghost follows the aim.** Press `Y`. A ghost plant tracks the hit point and
-   stands upright.
-2. **Legal ground accepts.** Aim at open ground. The ghost turns green. The
-   right trigger plants a tree that stays put.
-3. **Every refusal reads.** Aim at the pond, a rock, and a steep bank. The ghost
-   turns red and the label names the reason.
-4. **Spacing holds.** Aim within 3 m of a planted oak. The label reads "Oak is
-   too close". Aim past 4 m and it turns green again.
-5. **Neglect kills.** Plant a seed and wait 15 s. The visual swaps to dry
-   branches. There is no watering can yet, so every plant dies.
-6. **The hands stay split.** Press `T` then `1`. The left hand teleports. The
-   right hand still plants.
 
 ### Seed data model step, done
 Runtime code in `Assets/Scripts/Planting/`, assembly `Sogeti.Planting`.
@@ -434,28 +750,6 @@ Unity Atoms, and then every future package by hand.
 - The pond blocker top sits about 2 cm above the terrain. Setting `World > Pond`
    Box Collider Center Y to `-0.05` would add margin. Skipped, the gap works.
 
-### Teleport step, what "verified" means
-The checks that close the step. Re-run them if teleport regresses.
-
-1. **Camera height.** The horizon sits near 1.7 m. A floor level view means the
-   XR Simulation loader is active again on Standalone.
-2. **One simulator.** The Hierarchy shows exactly one simulator object.
-3. **Teleport works.** Aim at open ground about 5 m ahead. Expect a blue arc and
-   a ring reticle with a direction arrow. Release. The rig moves and stays upright.
-4. **Obstacles refuse.** Aim at a rock, then at the pond. Expect a red line and
-   no reticle. Releasing does not move you.
-5. **No teleport through an obstacle.** Put a rock between you and open ground.
-   Aim past it. The ray stops at the rock.
-6. **Slope filter.** Aim at the steepest bank. Expect red above about 30 degrees,
-   blue below. Raise the tolerance to 35 if gentle slopes read as invalid.
-7. **Debugger.** `Window > Analysis > XR Interaction Debugger`, Interactors tab.
-   Terrain lists the `World` TeleportationArea as a valid target. A rock lists
-   nothing.
-
-Demo worth recording: untick `PlayerObstacle` from the right Teleport Interactor
-raycast mask, then aim at the pond. The arc passes through and you land in the
-water. This shows why obstacles stay inside the mask. Re-tick it after.
-
 ### PC test setup
 No headset. Test with the classic **XR Device Simulator** in the scene.
 
@@ -471,6 +765,7 @@ Keys, read from `XR Device Simulator Controls.inputactions` and
 | `1` | Toggle `W` `A` `S` `D` between rig movement and Primary 2D Axis |
 | `I` `K` `J` `L` | Primary 2D Axis of the resting hand |
 | Left mouse | Trigger. `G` grip. `M` menu. |
+| `B` / `N` | Primary / secondary button of the manipulated hand |
 | `Tab` | Cycle devices. `Esc` stop. `V` reset. |
 
 Hands are split. The left hand teleports. The right hand plants.
@@ -486,10 +781,9 @@ XRI binds teleport to the Primary 2D Axis, north sector. The simulated
 controller and the Quest thumbstick resolve the same binding.
 
 ### Known issues, parked
-- The right trigger is shared. The planter and the Near-Far Interactor both read
-  `Activate`, but the interactor only uses it on an object it already holds.
-  Nothing is grabbable yet, so they do not clash. The watering can step
-  revisits this.
+- ~~The right trigger is shared.~~ Closed by the watering can step.
+  `RightHandToolSwitch` keeps one tool active, so only one reader of `Activate`
+  is ever alive. A grabbable object would re-open this.
 - XRI interaction layers 1 to 3 duplicate the physics layer names. Nothing
   reads them. Clearing them removes a source of confusion.
 - The 8 disabled terrain tiles sit at `y=0`, the active tile at `y=-1`. They do

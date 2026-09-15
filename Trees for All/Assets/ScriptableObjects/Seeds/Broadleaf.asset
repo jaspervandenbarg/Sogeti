@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Broadleaf
   m_EditorClassIdentifier: Sogeti.Planting::Sogeti.Planting.SeedDefinition
   displayName: Broadleaf
-  menuIcon: {fileID: 0}
+  menuIcon: {fileID: 21300000, guid: 6b0b6d34b05c4804ca90ed356df6f22a, type: 3}
   stages:
   - visualPrefab: {fileID: 9173750690402455373, guid: 134c96ff51198e4cea360c89aaab1411, type: 3}
     deathVisualPrefab: {fileID: 0}
