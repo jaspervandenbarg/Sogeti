@@ -81,7 +81,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a7d3d46e062149a4f818b44b3ca9df13, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Sogeti.Session.PlayerActionGate
-  phase: {fileID: 0}
+  phase: {fileID: 11400000, guid: 5579dbdcaaf0c374dacc0a11b5ef7836, type: 2}
   toolSwitch: {fileID: 0}
   toolMenu: {fileID: 0}
   behavioursToSuspend:

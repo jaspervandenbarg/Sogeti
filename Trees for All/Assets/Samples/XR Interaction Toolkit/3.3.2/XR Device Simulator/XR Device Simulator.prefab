@@ -26,13 +26,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6598815579406187037}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &6598815579406187026
 MonoBehaviour:
@@ -154,6 +154,7 @@ MonoBehaviour:
         m_Interactions: 
         m_SingletonActionBindings: []
         m_Flags: 0
+        m_Priority: 0
       m_InputActionValue:
         m_Name: 
         m_Type: 0
@@ -163,6 +164,7 @@ MonoBehaviour:
         m_Interactions: 
         m_SingletonActionBindings: []
         m_Flags: 0
+        m_Priority: 0
       m_InputActionReferencePerformed: {fileID: -5976510165261225158, guid: b72ab2a46d9094be38774d023beb4d34, type: 3}
       m_InputActionReferenceValue: {fileID: -5976510165261225158, guid: b72ab2a46d9094be38774d023beb4d34, type: 3}
       m_ObjectReferenceObject: {fileID: 0}
@@ -174,6 +176,7 @@ MonoBehaviour:
       m_ManualQueueValue: 0
       m_ManualQueueTargetFrame: 0
     m_Capture: {fileID: 11400000, guid: 95c319715e9d2644da8ae09af8ccfee6, type: 2}
+    m_IsQuickAction: 0
   - m_Name: Pinch
     m_ToggleInput:
       m_InputSourceMode: 2
@@ -186,6 +189,7 @@ MonoBehaviour:
         m_Interactions: 
         m_SingletonActionBindings: []
         m_Flags: 0
+        m_Priority: 0
       m_InputActionValue:
         m_Name: 
         m_Type: 0
@@ -195,6 +199,7 @@ MonoBehaviour:
         m_Interactions: 
         m_SingletonActionBindings: []
         m_Flags: 0
+        m_Priority: 0
       m_InputActionReferencePerformed: {fileID: -8306000708137014372, guid: b72ab2a46d9094be38774d023beb4d34, type: 3}
       m_InputActionReferenceValue: {fileID: -8306000708137014372, guid: b72ab2a46d9094be38774d023beb4d34, type: 3}
       m_ObjectReferenceObject: {fileID: 0}
@@ -206,6 +211,7 @@ MonoBehaviour:
       m_ManualQueueValue: 0
       m_ManualQueueTargetFrame: 0
     m_Capture: {fileID: 11400000, guid: d6e15a52475c2564ca7d2977fdece24a, type: 2}
+    m_IsQuickAction: 0
   - m_Name: Grab
     m_ToggleInput:
       m_InputSourceMode: 2
@@ -218,6 +224,7 @@ MonoBehaviour:
         m_Interactions: 
         m_SingletonActionBindings: []
         m_Flags: 0
+        m_Priority: 0
       m_InputActionValue:
         m_Name: 
         m_Type: 0
@@ -227,6 +234,7 @@ MonoBehaviour:
         m_Interactions: 
         m_SingletonActionBindings: []
         m_Flags: 0
+        m_Priority: 0
       m_InputActionReferencePerformed: {fileID: -4373459253818063952, guid: b72ab2a46d9094be38774d023beb4d34, type: 3}
       m_InputActionReferenceValue: {fileID: -4373459253818063952, guid: b72ab2a46d9094be38774d023beb4d34, type: 3}
       m_ObjectReferenceObject: {fileID: 0}
@@ -238,6 +246,7 @@ MonoBehaviour:
       m_ManualQueueValue: 0
       m_ManualQueueTargetFrame: 0
     m_Capture: {fileID: 11400000, guid: 3861c298d39c60c44b16920421444875, type: 2}
+    m_IsQuickAction: 0
   - m_Name: Thumb
     m_ToggleInput:
       m_InputSourceMode: 2
@@ -250,6 +259,7 @@ MonoBehaviour:
         m_Interactions: 
         m_SingletonActionBindings: []
         m_Flags: 0
+        m_Priority: 0
       m_InputActionValue:
         m_Name: 
         m_Type: 0
@@ -259,6 +269,7 @@ MonoBehaviour:
         m_Interactions: 
         m_SingletonActionBindings: []
         m_Flags: 0
+        m_Priority: 0
       m_InputActionReferencePerformed: {fileID: -741559036651486339, guid: b72ab2a46d9094be38774d023beb4d34, type: 3}
       m_InputActionReferenceValue: {fileID: -741559036651486339, guid: b72ab2a46d9094be38774d023beb4d34, type: 3}
       m_ObjectReferenceObject: {fileID: 0}
@@ -270,6 +281,7 @@ MonoBehaviour:
       m_ManualQueueValue: 0
       m_ManualQueueTargetFrame: 0
     m_Capture: {fileID: 11400000, guid: 9d8c9c84da35a7c4c89efd57343c1df8, type: 2}
+    m_IsQuickAction: 0
   - m_Name: Open
     m_ToggleInput:
       m_InputSourceMode: 2
@@ -282,6 +294,7 @@ MonoBehaviour:
         m_Interactions: 
         m_SingletonActionBindings: []
         m_Flags: 0
+        m_Priority: 0
       m_InputActionValue:
         m_Name: 
         m_Type: 0
@@ -291,6 +304,7 @@ MonoBehaviour:
         m_Interactions: 
         m_SingletonActionBindings: []
         m_Flags: 0
+        m_Priority: 0
       m_InputActionReferencePerformed: {fileID: -9192331390769138535, guid: b72ab2a46d9094be38774d023beb4d34, type: 3}
       m_InputActionReferenceValue: {fileID: -9192331390769138535, guid: b72ab2a46d9094be38774d023beb4d34, type: 3}
       m_ObjectReferenceObject: {fileID: 0}
@@ -302,6 +316,7 @@ MonoBehaviour:
       m_ManualQueueValue: 0
       m_ManualQueueTargetFrame: 0
     m_Capture: {fileID: 11400000, guid: 05293ab353dc8a747a36ed129311686d, type: 2}
+    m_IsQuickAction: 0
   - m_Name: Fist
     m_ToggleInput:
       m_InputSourceMode: 2
@@ -314,6 +329,7 @@ MonoBehaviour:
         m_Interactions: 
         m_SingletonActionBindings: []
         m_Flags: 0
+        m_Priority: 0
       m_InputActionValue:
         m_Name: 
         m_Type: 0
@@ -323,6 +339,7 @@ MonoBehaviour:
         m_Interactions: 
         m_SingletonActionBindings: []
         m_Flags: 0
+        m_Priority: 0
       m_InputActionReferencePerformed: {fileID: 6469712917552426222, guid: b72ab2a46d9094be38774d023beb4d34, type: 3}
       m_InputActionReferenceValue: {fileID: 6469712917552426222, guid: b72ab2a46d9094be38774d023beb4d34, type: 3}
       m_ObjectReferenceObject: {fileID: 0}
@@ -334,4 +351,5 @@ MonoBehaviour:
       m_ManualQueueValue: 0
       m_ManualQueueTargetFrame: 0
     m_Capture: {fileID: 11400000, guid: 2a7c8ca0feac7cc44a5c225164ef311d, type: 2}
+    m_IsQuickAction: 0
   m_RestingHandExpressionCapture: {fileID: 11400000, guid: 5be099e6e6012c244bb41881b6c0ea07, type: 2}

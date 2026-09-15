@@ -119,11 +119,6 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!218 &25722425 stripped
-Terrain:
-  m_CorrespondingSourceObject: {fileID: 2582979532479810017, guid: c7839a776c8a1744496e4b4453ff6092, type: 3}
-  m_PrefabInstance: {fileID: 1607718304155893827}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &201720105
 GameObject:
   m_ObjectHideFlags: 0
@@ -182,10 +177,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: GamePanel
       objectReference: {fileID: 0}
-    - target: {fileID: 7400000000000000001, guid: 3c9e6f5a0d8b6c4f1e2a7b9c3d5f8a04, type: 3}
-      propertyPath: m_IsActive
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 7400000000000000002, guid: 3c9e6f5a0d8b6c4f1e2a7b9c3d5f8a04, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -227,44 +218,9 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7400000000000000006, guid: 3c9e6f5a0d8b6c4f1e2a7b9c3d5f8a04, type: 3}
-      propertyPath: gate
-      value: 
-      objectReference: {fileID: 1448530279}
-    - target: {fileID: 7400000000000000006, guid: 3c9e6f5a0d8b6c4f1e2a7b9c3d5f8a04, type: 3}
-      propertyPath: phase
-      value: 
-      objectReference: {fileID: 11400000, guid: 5579dbdcaaf0c374dacc0a11b5ef7836, type: 2}
-    - target: {fileID: 7400000000000000006, guid: 3c9e6f5a0d8b6c4f1e2a7b9c3d5f8a04, type: 3}
-      propertyPath: session
-      value: 
-      objectReference: {fileID: 1448530281}
-    - target: {fileID: 7400000000000000006, guid: 3c9e6f5a0d8b6c4f1e2a7b9c3d5f8a04, type: 3}
-      propertyPath: restarter
-      value: 
-      objectReference: {fileID: 1448530278}
-    - target: {fileID: 7400000000000000006, guid: 3c9e6f5a0d8b6c4f1e2a7b9c3d5f8a04, type: 3}
       propertyPath: playerHead
       value: 
       objectReference: {fileID: 3980434948245349619}
-    - target: {fileID: 7400000000000000006, guid: 3c9e6f5a0d8b6c4f1e2a7b9c3d5f8a04, type: 3}
-      propertyPath: roundEnded
-      value: 
-      objectReference: {fileID: 11400000, guid: cb1bd1d1a84ae31419b4eb4f75a6f26c, type: 2}
-    - target: {fileID: 7400000000000000006, guid: 3c9e6f5a0d8b6c4f1e2a7b9c3d5f8a04, type: 3}
-      propertyPath: restartRequested
-      value: 
-      objectReference: {fileID: 11400000, guid: a1c4f0e2b5d34f1ea0d5c71e9b204306, type: 2}
-    - target: {fileID: 7400000000000000006, guid: 3c9e6f5a0d8b6c4f1e2a7b9c3d5f8a04, type: 3}
-      propertyPath: startRoundRequested
-      value: 
-      objectReference: {fileID: 11400000, guid: a1c4f0e2b5d34f1ea0d5c71e9b204305, type: 2}
-    - target: {fileID: 7400000000000000024, guid: 3c9e6f5a0d8b6c4f1e2a7b9c3d5f8a04, type: 3}
-      propertyPath: m_text
-      value: 'This wasteland is barren and dead.
-
-        Plant seeds and water them
-        so they can root and bring back life to this land. '
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -292,35 +248,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 43c5b5167a427e24eaa483027139653a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!1 &324760405 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 2859114907853415212, guid: c7839a776c8a1744496e4b4453ff6092, type: 3}
-  m_PrefabInstance: {fileID: 1607718304155893827}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &324760407
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 324760405}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dd22e3953cfafad4ca3c8cc037d46e62, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Sogeti.Environment.ObstacleScatterer
-  terrain: {fileID: 25722425}
-  obstaclePrefabs:
-  - {fileID: 6941053685286289651, guid: 7388cf7f5ab20c8479d2ccfb42cefbe2, type: 3}
-  - {fileID: 1280275985582191230, guid: f74c4782034945a41bce5956db2f9c46, type: 3}
-  - {fileID: 6999195791698481150, guid: 4e123d2a5807b724d847169499a29301, type: 3}
-  densityPerHundredSqm: 3
-  minSpacing: 3
-  maxAttemptsPerObstacle: 10
-  avoidMask:
-    serializedVersion: 2
-    m_Bits: 144
-  avoidCheckRadius: 1
 --- !u!114 &520245849 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 4144992392637940435, guid: 49c135c5866e7b64d861e49f959f8421, type: 3}
@@ -614,48 +541,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: XR Device Simulator
       objectReference: {fileID: 0}
-    - target: {fileID: 6598815579406187037, guid: 18ddb545287c546e19cc77dc9fbb2189, type: 3}
-      propertyPath: m_IsActive
-      value: 1
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 18ddb545287c546e19cc77dc9fbb2189, type: 3}
---- !u!114 &1448530278 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 6201675965894024348, guid: 908ff6a59e15e0643898e8919bf13d63, type: 3}
-  m_PrefabInstance: {fileID: 8322023969522320540}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 021ba70e01cb5e9449852110effdb6fc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Sogeti.Session.GameRestarter
---- !u!114 &1448530279 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 9003880683136082979, guid: 908ff6a59e15e0643898e8919bf13d63, type: 3}
-  m_PrefabInstance: {fileID: 8322023969522320540}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a7d3d46e062149a4f818b44b3ca9df13, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Sogeti.Session.PlayerActionGate
---- !u!114 &1448530281 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 3771160856567776056, guid: 908ff6a59e15e0643898e8919bf13d63, type: 3}
-  m_PrefabInstance: {fileID: 8322023969522320540}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a6c4bcef697641d4b849b059d86db22f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Sogeti.Session.GameSession
 --- !u!114 &1586860379 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 4917469202140490039, guid: 49c135c5866e7b64d861e49f959f8421, type: 3}
@@ -755,10 +645,7 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 2859114907853415212, guid: c7839a776c8a1744496e4b4453ff6092, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 324760407}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: c7839a776c8a1744496e4b4453ff6092, type: 3}
 --- !u!1001 &3980434948245349614
 PrefabInstance:
@@ -772,26 +659,10 @@ PrefabInstance:
       propertyPath: m_InteractionManager
       value: 
       objectReference: {fileID: 201720106}
-    - target: {fileID: 2885711702723026731, guid: 49c135c5866e7b64d861e49f959f8421, type: 3}
-      propertyPath: capacitySeconds
-      value: 6
-      objectReference: {fileID: 0}
     - target: {fileID: 4738946592952863330, guid: 49c135c5866e7b64d861e49f959f8421, type: 3}
       propertyPath: m_InteractionManager
       value: 
       objectReference: {fileID: 201720106}
-    - target: {fileID: 4919215464539080060, guid: 49c135c5866e7b64d861e49f959f8421, type: 3}
-      propertyPath: score
-      value: 
-      objectReference: {fileID: 11400000, guid: a1c4f0e2b5d34f1ea0d5c71e9b204301, type: 2}
-    - target: {fileID: 4919215464539080060, guid: 49c135c5866e7b64d861e49f959f8421, type: 3}
-      propertyPath: session
-      value: 
-      objectReference: {fileID: 1448530281}
-    - target: {fileID: 4919215464539080060, guid: 49c135c5866e7b64d861e49f959f8421, type: 3}
-      propertyPath: secondsRemaining
-      value: 
-      objectReference: {fileID: 11400000, guid: a1c4f0e2b5d34f1ea0d5c71e9b204302, type: 2}
     - target: {fileID: 5070526964447881363, guid: 49c135c5866e7b64d861e49f959f8421, type: 3}
       propertyPath: m_InteractionManager
       value: 
@@ -966,10 +837,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 9003880683136082979, guid: 908ff6a59e15e0643898e8919bf13d63, type: 3}
-      propertyPath: phase
-      value: 
-      objectReference: {fileID: 11400000, guid: 5579dbdcaaf0c374dacc0a11b5ef7836, type: 2}
     - target: {fileID: 9003880683136082979, guid: 908ff6a59e15e0643898e8919bf13d63, type: 3}
       propertyPath: toolMenu
       value: 
