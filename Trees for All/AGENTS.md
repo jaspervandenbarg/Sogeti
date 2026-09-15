@@ -251,8 +251,12 @@ Put a new rule in layer 2, where a test can reach it without a headset.
 ## Next Step Claude progress (overwrite when finished)
 Backlog complete. Polish only. Every step in `### Build order` is done and
 verified in Play Mode, including the intro UI, which the start panel covers.
-`## How to play` in `README.md` at the git root still wants the round length,
-the start panel, and the restart added.
+`## How to play` in `README.md` at the git root is current.
+
+The HUD wrist binding is code-complete but not yet wired in the scene. See
+`### HUD wrist binding, code done — needs scene wiring`: reparent `GameHud`
+under `Left Controller` and wire `HudMenuLink.hudRoot`, then verify in Play
+Mode and update that section's heading to "done".
 
 ## Progress
 Update this section at the end of every step. Keep one line per step.
