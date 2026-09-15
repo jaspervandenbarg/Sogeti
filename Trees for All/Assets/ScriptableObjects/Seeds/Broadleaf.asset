@@ -17,9 +17,9 @@ MonoBehaviour:
   stages:
   - visualPrefab: {fileID: 9173750690402455373, guid: 134c96ff51198e4cea360c89aaab1411, type: 3}
     deathVisualPrefab: {fileID: 0}
-    visualScale: 1
+    visualScale: 1.4
     secondsToEmpty: 30
-    pointsForNextStage: 20
+    pointsForNextStage: 30
     pointsGraceSeconds: 10
     pointsDecaySeconds: 30
     minimumPointsFraction: 0.25
@@ -27,7 +27,7 @@ MonoBehaviour:
     deathVisualPrefab: {fileID: 0}
     visualScale: 1.4
     secondsToEmpty: 45
-    pointsForNextStage: 40
+    pointsForNextStage: 50
     pointsGraceSeconds: 15
     pointsDecaySeconds: 45
     minimumPointsFraction: 0.25
@@ -41,6 +41,6 @@ MonoBehaviour:
     minimumPointsFraction: 0.25
   defaultDeathVisualPrefab: {fileID: 9048257361043090810, guid: d64eab04e12df5469b30e8a2cb88a633, type: 3}
   pointsForPlanting: 10
-  waterFillPerSecond: 0.25
+  waterFillPerSecond: 0.15
   minimumSpacingToSameType: 3
   minimumSpacingToOtherTypes: 1.5

@@ -765,6 +765,10 @@ PrefabInstance:
       propertyPath: m_InteractionManager
       value: 
       objectReference: {fileID: 201720106}
+    - target: {fileID: 2885711702723026731, guid: 49c135c5866e7b64d861e49f959f8421, type: 3}
+      propertyPath: capacitySeconds
+      value: 6
+      objectReference: {fileID: 0}
     - target: {fileID: 4738946592952863330, guid: 49c135c5866e7b64d861e49f959f8421, type: 3}
       propertyPath: m_InteractionManager
       value: 
