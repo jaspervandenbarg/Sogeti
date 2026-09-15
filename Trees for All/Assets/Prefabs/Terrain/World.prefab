@@ -619,6 +619,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7283472421253878799}
+  - component: {fileID: 26926167934736170}
   m_Layer: 3
   m_Name: EnvironmentManager
   m_TagString: Untagged
@@ -641,6 +642,30 @@ Transform:
   m_Children: []
   m_Father: {fileID: 939277119397821290}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &26926167934736170
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2859114907853415212}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dd22e3953cfafad4ca3c8cc037d46e62, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Sogeti.Environment.ObstacleScatterer
+  terrain: {fileID: 2582979532479810017}
+  obstaclePrefabs:
+  - {fileID: 6941053685286289651, guid: 7388cf7f5ab20c8479d2ccfb42cefbe2, type: 3}
+  - {fileID: 1280275985582191230, guid: f74c4782034945a41bce5956db2f9c46, type: 3}
+  - {fileID: 6999195791698481150, guid: 4e123d2a5807b724d847169499a29301, type: 3}
+  densityPerHundredSqm: 3
+  minSpacing: 3
+  maxAttemptsPerObstacle: 10
+  avoidMask:
+    serializedVersion: 2
+    m_Bits: 144
+  avoidCheckRadius: 1
 --- !u!1 &3087473750950594462
 GameObject:
   m_ObjectHideFlags: 0

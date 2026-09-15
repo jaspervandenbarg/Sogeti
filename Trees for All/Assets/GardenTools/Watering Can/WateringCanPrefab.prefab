@@ -639,6 +639,7 @@ MonoBehaviour:
     m_Reference: {fileID: 83097790271614945, guid: c348712bda248c246b8c49b3db54643f, type: 3}
   capacitySeconds: 10
   refillPerSecond: 0.5
+  fill01: {fileID: 11400000, guid: a1c4f0e2b5d34f1ea0d5c71e9b204303, type: 2}
   stream: {fileID: 4128034707642214039}
   pourAudioSource: {fileID: 8200000000000000001}
   dipAudioSource: {fileID: 8200000000000000002}
@@ -654,7 +655,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a5c08e7b41d49f6890e2d7c1b46a5f9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  can: {fileID: 5499740}
+  fill01: {fileID: 11400000, guid: a1c4f0e2b5d34f1ea0d5c71e9b204303, type: 2}
   fillPivot: {fileID: 400007}
   fillRenderer: {fileID: 2300009}
   fullMaterial: {fileID: 2100000, guid: b2c3d4e5f60718293a4b5c6d7e8f9001, type: 2}

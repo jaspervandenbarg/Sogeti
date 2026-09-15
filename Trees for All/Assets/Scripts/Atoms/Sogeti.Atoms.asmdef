@@ -1,0 +1,19 @@
+{
+    "name": "Sogeti.Atoms",
+    "rootNamespace": "Sogeti.Atoms",
+    "references": [
+        "UnityAtoms.UnityAtomsCore.Runtime",
+        "UnityAtoms.UnityAtomsBaseAtoms.Runtime",
+        "Sogeti.Planting",
+        "Sogeti.Game"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

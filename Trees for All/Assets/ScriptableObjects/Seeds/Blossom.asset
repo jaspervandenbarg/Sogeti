@@ -17,17 +17,17 @@ MonoBehaviour:
   stages:
   - visualPrefab: {fileID: 8342448983144309027, guid: fcab16f0d26cd82dab4e96bf1ef5ecc5, type: 3}
     deathVisualPrefab: {fileID: 0}
-    visualScale: 1
-    secondsToEmpty: 30
-    pointsForNextStage: 20
+    visualScale: 0.8
+    secondsToEmpty: 25
+    pointsForNextStage: 10
     pointsGraceSeconds: 10
     pointsDecaySeconds: 30
     minimumPointsFraction: 0.25
   - visualPrefab: {fileID: 1073815990686323864, guid: 6bbaea1be78b8d02d852cd83ce21cd94, type: 3}
     deathVisualPrefab: {fileID: 0}
-    visualScale: 1
-    secondsToEmpty: 45
-    pointsForNextStage: 40
+    visualScale: 0.8
+    secondsToEmpty: 40
+    pointsForNextStage: 25
     pointsGraceSeconds: 15
     pointsDecaySeconds: 45
     minimumPointsFraction: 0.25

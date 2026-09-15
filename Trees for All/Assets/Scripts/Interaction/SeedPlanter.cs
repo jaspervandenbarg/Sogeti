@@ -1,4 +1,5 @@
 using System;
+using Sogeti.Atoms;
 using Sogeti.Planting;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -37,7 +38,11 @@ namespace Sogeti.Interaction
         private float obstacleClearance = 0.4f;
 
         [Header("Seeds")]
-        [Tooltip("The seeds the player can pick. The tool menu reads the same asset.")]
+        [Tooltip("The seed to plant next. The menu writes it, the hand only reads it.")]
+        [SerializeField]
+        private SeedDefinitionVariable selectedSeed;
+
+        [Tooltip("Every seed the rules must search for when spacing a new plant.")]
         [SerializeField]
         private SeedCatalog seedCatalog;
         [SerializeField]
@@ -67,29 +72,10 @@ namespace Sogeti.Interaction
         /// <summary>Raised on a refused trigger press, so a later step can add a sound or a hint.</summary>
         public event Action<PlacementResult> PlantRefused;
 
-        /// <summary>The new seed. The menu highlight and the hand readout both follow this, never the click.</summary>
-        public event Action<SeedDefinition> SeedChanged;
-
-        public SeedDefinition SelectedSeed { get; private set; }
-
         public PlacementResult CurrentResult => currentResult;
 
-        /// <summary>The only way to change the seed. Null puts the ray back in an idle state.</summary>
-        public void SelectSeed(SeedDefinition seed)
-        {
-            if (SelectedSeed == seed)
-            {
-                return;
-            }
-
-            SelectedSeed = seed;
-            if (seed == null && preview != null)
-            {
-                preview.Hide();
-            }
-
-            SeedChanged?.Invoke(SelectedSeed);
-        }
+        /// <summary>The seed the Variable holds. Null puts the ray in an idle state.</summary>
+        private SeedDefinition SelectedSeed => selectedSeed != null ? selectedSeed.Value : null;
 
         private void Awake()
         {
@@ -110,16 +96,16 @@ namespace Sogeti.Interaction
                 maxSurfaceAngle,
                 obstacleClearance,
                 seedCatalog != null ? seedCatalog.Seeds : null);
-
-            // The menu opens on a seed the player never picked, so the hand is never empty.
-            if (SelectedSeed == null && seedCatalog != null)
-            {
-                SelectSeed(seedCatalog.FirstSeed);
-            }
         }
 
         private void OnEnable()
         {
+            // The ghost outlives a cleared seed, so the preview has to hear the write.
+            if (selectedSeed != null)
+            {
+                selectedSeed.Changed.Register(OnSelectedSeedChanged);
+            }
+
             InputAction action = plantAction.action;
             if (action == null)
             {
@@ -132,6 +118,11 @@ namespace Sogeti.Interaction
 
         private void OnDisable()
         {
+            if (selectedSeed != null)
+            {
+                selectedSeed.Changed.Unregister(OnSelectedSeedChanged);
+            }
+
             InputAction action = plantAction.action;
             if (action == null)
             {
@@ -164,6 +155,15 @@ namespace Sogeti.Interaction
             }
 
             UpdateRayVisual();
+        }
+
+        // Update paints the ghost for a live seed. Only the cleared case needs a push.
+        private void OnSelectedSeedChanged(SeedDefinition seed)
+        {
+            if (seed == null && preview != null)
+            {
+                preview.Hide();
+            }
         }
 
         private void OnPlantPressed(InputAction.CallbackContext context)

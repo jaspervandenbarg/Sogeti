@@ -6,7 +6,10 @@ Please refer to the "Opdrachtomschrijving XR developer Sogeti.pdf" for the assig
 1. This project was build by `Jasper van den Barg` with the help of `AI agents`
 2. There was no access to VR hardware or a Quest 3 during the development so all testing was done in the Unity editor.
 3. Decisions were made based on the point 2.
-
+4. I did not receive any response on point 2 until `15-09-2026`, the day before the technical interview. By this time the assignment was already largely finished.
+5. On editor startup ignore `UnityAtoms` errors, just clear them and it will be fine.
+6. `Functionality` is tested, due to lack of VR hardware `playability` has not been tested.
+7. Project builds without Build errors
 ## Design Decisions
 
 # Gameplay Decisions
@@ -19,10 +22,15 @@ Please refer to the "Opdrachtomschrijving XR developer Sogeti.pdf" for the assig
 # Technical Decisions
 1. 
 
+# What I would have done differently
+1. 
+
 ## How to play
 
 # Testing on Quest 3
-Build the project and install the apk on the Quest 3
+1. Open the project.
+2. Make sure `DevelopmentScene` is added to the build list and selected
+3. Build project.
 
 # Testing the game on PC with a mouse and keyboard. No headset is needed.
 

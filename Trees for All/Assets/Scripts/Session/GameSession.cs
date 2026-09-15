@@ -1,6 +1,7 @@
-using System;
+using Sogeti.Atoms;
 using Sogeti.Game;
 using Sogeti.Planting;
+using UnityAtoms.BaseAtoms;
 using UnityEngine;
 
 namespace Sogeti.Session
@@ -9,6 +10,9 @@ namespace Sogeti.Session
     /// One round. It owns the clock and the score, and nothing else.
     /// Every award arrives through a guarded Record call, so the "is the round
     /// running" test lives here once instead of once per caller.
+    /// The Atoms are an outbound channel. ScoreTally, GameCountdown and the
+    /// phase field stay the source of truth, so a missing Atom costs the
+    /// broadcast and never the round.
     /// </summary>
     [DisallowMultipleComponent]
     public class GameSession : MonoBehaviour
@@ -21,21 +25,27 @@ namespace Sogeti.Session
         [SerializeField]
         private bool autoStartOnLoad;
 
+        [Header("Broadcast")]
+        [SerializeField]
+        private IntVariable score;
+
+        [Tooltip("Whole seconds. Atoms drops a repeat write, so the HUD text rebuilds once per second.")]
+        [SerializeField]
+        private IntVariable secondsRemaining;
+
+        [SerializeField]
+        private GamePhaseVariable phase;
+
+        [Tooltip("The final tally. The game over panel needs the per seed rows, which the score Variable cannot carry.")]
+        [SerializeField]
+        private ScoreTallyEvent roundEnded;
+
+        [Header("Commands")]
+        [SerializeField]
+        private VoidEvent startRoundRequested;
+
         private GameCountdown countdown;
         private ScoreTally tally;
-        private int lastWholeSecond = -1;
-
-        public event Action<GamePhase> PhaseChanged;
-
-        /// <summary>The new total.</summary>
-        public event Action<int> ScoreChanged;
-
-        /// <summary>
-        /// The seconds left, raised only when the whole second changes.
-        /// A per-frame raise would rebuild the TMP mesh 90 times a second on
-        /// mobile hardware for a clock that shows one decimal place of nothing.
-        /// </summary>
-        public event Action<float> SecondsRemainingChanged;
 
         public GamePhase Phase { get; private set; } = GamePhase.Ready;
 
@@ -47,8 +57,8 @@ namespace Sogeti.Session
 
         /// <summary>
         /// Resets before it announces.
-        /// PhaseChanged un-hides the HUD, and a HUD that reads the old score for one
-        /// frame looks like a failed restart.
+        /// The phase write un-hides the HUD, and a HUD that reads the old score
+        /// for one frame looks like a failed restart.
         /// </summary>
         public void StartRound()
         {
@@ -59,7 +69,7 @@ namespace Sogeti.Session
 
             tally.Reset();
             countdown.Start();
-            RaiseTime(force: true);
+            PublishTime();
             SetPhase(GamePhase.Playing);
         }
 
@@ -103,11 +113,44 @@ namespace Sogeti.Session
             countdown.Expired += OnCountdownExpired;
         }
 
-        // Consumers subscribe in OnEnable, which Unity runs before every Start.
+        // The no argument overload never replays, so a late subscriber cannot restart a round.
+        private void OnEnable()
+        {
+            if (startRoundRequested != null)
+            {
+                startRoundRequested.Register(StartRound);
+            }
+        }
+
+        private void OnDisable()
+        {
+            if (startRoundRequested != null)
+            {
+                startRoundRequested.Unregister(StartRound);
+            }
+        }
+
+        /// <summary>
+        /// Forces the opening values out even when they equal the Initial Value.
+        /// A plain write would change nothing, leave the replay buffer empty,
+        /// and a consumer enabled later would read a blank channel.
+        /// </summary>
         private void Start()
         {
-            RaiseTime(force: true);
-            PhaseChanged?.Invoke(Phase);
+            if (score != null)
+            {
+                score.SetValue(tally.Total, forceEvent: true);
+            }
+
+            if (secondsRemaining != null)
+            {
+                secondsRemaining.SetValue(WholeSecondsLeft(), forceEvent: true);
+            }
+
+            if (phase != null)
+            {
+                phase.SetValue(Phase, forceEvent: true);
+            }
 
             if (autoStartOnLoad)
             {
@@ -123,7 +166,7 @@ namespace Sogeti.Session
             }
 
             countdown.Tick(Time.deltaTime);
-            RaiseTime(force: false);
+            PublishTime();
         }
 
         private void OnDestroy()
@@ -139,7 +182,13 @@ namespace Sogeti.Session
             }
         }
 
-        private void OnTotalChanged(int total) => ScoreChanged?.Invoke(total);
+        private void OnTotalChanged(int total)
+        {
+            if (score != null)
+            {
+                score.Value = total;
+            }
+        }
 
         // The clock owns the end of the round. Nothing else may call EndRound on time.
         private void OnCountdownExpired() => SetPhase(GamePhase.Ended);
@@ -152,21 +201,32 @@ namespace Sogeti.Session
             }
 
             Phase = next;
-            PhaseChanged?.Invoke(Phase);
+
+            // The tally goes first. The phase write opens the game over panel, and a
+            // panel that reads the tally in the same call would find nothing there yet.
+            if (Phase == GamePhase.Ended && roundEnded != null)
+            {
+                roundEnded.Raise(tally);
+            }
+
+            if (phase != null)
+            {
+                phase.Value = Phase;
+            }
+
             return true;
         }
 
-        private void RaiseTime(bool force)
+        // Atoms skips a write that changes nothing, which throttles the clock to whole seconds.
+        private void PublishTime()
         {
-            int whole = Mathf.CeilToInt(Mathf.Max(0f, countdown.SecondsRemaining));
-            if (!force && whole == lastWholeSecond)
+            if (secondsRemaining != null)
             {
-                return;
+                secondsRemaining.Value = WholeSecondsLeft();
             }
-
-            lastWholeSecond = whole;
-            SecondsRemainingChanged?.Invoke(countdown.SecondsRemaining);
         }
+
+        private int WholeSecondsLeft() => Mathf.CeilToInt(Mathf.Max(0f, SecondsRemaining));
 
         private void OnValidate() => roundSeconds = Mathf.Max(roundSeconds, 1f);
     }

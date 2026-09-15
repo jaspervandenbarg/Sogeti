@@ -1,5 +1,6 @@
 using Sogeti.Planting;
 using Sogeti.Watering;
+using UnityAtoms.BaseAtoms;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -67,6 +68,10 @@ namespace Sogeti.Interaction
         [Tooltip("Meter units per second while the spout sits in the pond.")]
         private float refillPerSecond = 0.5f;
 
+        [SerializeField]
+        [Tooltip("How full the can is, 0 to 1. The level bar reads this and never asks the can.")]
+        private FloatVariable fill01;
+
         [Header("Feedback")]
         [SerializeField]
         private ParticleSystem stream;
@@ -120,6 +125,7 @@ namespace Sogeti.Interaction
             }
 
             SetStreaming(false);
+            PublishFill();
         }
 
         private void OnDisable()
@@ -154,6 +160,17 @@ namespace Sogeti.Interaction
             if (spoutInWater)
             {
                 tank.Refill(refillPerSecond, deltaTime);
+            }
+
+            PublishFill();
+        }
+
+        // Atoms skips a write that changes nothing, so a still can costs the bar no work.
+        private void PublishFill()
+        {
+            if (fill01 != null)
+            {
+                fill01.Value = Fill01;
             }
         }
 

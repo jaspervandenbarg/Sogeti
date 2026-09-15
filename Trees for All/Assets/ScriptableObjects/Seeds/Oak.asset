@@ -41,6 +41,6 @@ MonoBehaviour:
     minimumPointsFraction: 0.25
   defaultDeathVisualPrefab: {fileID: 9048257361043090810, guid: d64eab04e12df5469b30e8a2cb88a633, type: 3}
   pointsForPlanting: 10
-  waterFillPerSecond: 0.25
+  waterFillPerSecond: 0.2
   minimumSpacingToSameType: 3
   minimumSpacingToOtherTypes: 1.5

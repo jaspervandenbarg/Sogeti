@@ -1,3 +1,5 @@
+using Sogeti.Atoms;
+using Sogeti.Game;
 using Sogeti.Interaction;
 using Sogeti.UI.ToolMenu;
 using UnityEngine;
@@ -9,10 +11,15 @@ namespace Sogeti.Session
     /// The arrays are generic on purpose. Naming ControllerInputActionManager here
     /// would tie gameplay code to a read-only XRI sample, and toggling enabled or
     /// SetActive is all this needs.
+    /// It follows the phase itself, so the panel never has to reach in here.
     /// </summary>
     [DisallowMultipleComponent]
     public class PlayerActionGate : MonoBehaviour
     {
+        [Tooltip("The round phase. GamePhaseRules decides which phases let the player act.")]
+        [SerializeField]
+        private GamePhaseVariable phase;
+
         [Tooltip("Stows the planter and the watering can. The right trigger then drives UI only.")]
         [SerializeField]
         private RightHandToolSwitch toolSwitch;
@@ -30,6 +37,26 @@ namespace Sogeti.Session
         private GameObject[] objectsToDeactivate = new GameObject[0];
 
         public bool PlayerActionsEnabled { get; private set; } = true;
+
+        // Nothing deactivates this object, so it never misses a phase write.
+        private void OnEnable()
+        {
+            if (phase != null)
+            {
+                phase.Changed.Register(OnPhaseChanged);
+            }
+        }
+
+        private void OnDisable()
+        {
+            if (phase != null)
+            {
+                phase.Changed.Unregister(OnPhaseChanged);
+            }
+        }
+
+        private void OnPhaseChanged(GamePhase next)
+            => SetPlayerActionsEnabled(GamePhaseRules.PlayerActsIn(next));
 
         /// <summary>
         /// Order matters in both directions.

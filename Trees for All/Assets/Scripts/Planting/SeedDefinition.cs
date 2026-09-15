@@ -6,7 +6,7 @@ namespace Sogeti.Planting
     /// <summary>
     /// A seed type as data. A new seed type needs a new asset, never new code.
     /// </summary>
-    [CreateAssetMenu(fileName = "SeedDefinition", menuName = "Trees for All/Seed Definition")]
+    [CreateAssetMenu(fileName = "SeedDefinition", menuName = "Sogeti/Trees for All/Seed Definition")]
     public class SeedDefinition : ScriptableObject
     {
         [SerializeField]
