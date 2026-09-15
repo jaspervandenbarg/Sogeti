@@ -17,9 +17,11 @@ and grows trees inside a limited play space.
 - Repo host: GitHub
 - Company name: `Sogeti`
 
-Teleport, planting, the water meter, and the watering can all work and are
-verified in Play Mode. See `## Progress` at the end of this file for the
-current state.
+The project is complete. Every assignment requirement is built and verified
+in Play Mode: teleport, planting, growth stages, the water meter, the
+watering can, the tool and seed menu, scoring, the timer, the end screen, and
+the intro UI. See `## Progress` at the end of this file for the build history
+and the architectural rules a future change must respect.
 
 - Work scene: `Assets/Scenes/DevelopmentScene.unity`.
 - Player rig: `Assets/Prefabs/Player/PlayerRig.prefab`, a prefab variant of the
@@ -302,19 +304,14 @@ per-instance state.
 - - Show Restart button
 
 ## Next Step Claude progress (overwrite when finished)
-Backlog complete. Polish only. Every step in `### Build order` is done and
-verified in Play Mode, including the intro UI, which the start panel covers.
-`## How to play` in `README.md` at the git root is current.
+Project complete. Every step in `### Build order` is done and verified in
+Play Mode, including the intro UI, which the start panel covers. The Atoms
+decoupling step and the HUD wrist binding are both wired and verified. See
+`## Progress` for the full build history. `## How to play` in `README.md` at
+the git root is current.
 
-The HUD wrist binding is code-complete but not yet wired in the scene. See
-`### HUD wrist binding, code done — needs scene wiring`: reparent `GameHud`
-under `Left Controller` and wire `HudMenuLink.hudRoot`, then verify in Play
-Mode and update that section's heading to "done".
-
-The Atoms decoupling step is code-complete and needs Inspector wiring. See
-`### Atoms decoupling step, code done — needs Inspector wiring`. Create the
-three custom Atom assets, fill every new Atom field, then drop the scene
-overrides the prefabs no longer need.
+No open implementation steps remain. Further work here is scoped fixes or
+polish the developer asks for, not backlog items.
 
 ## Progress
 Update this section at the end of every step. Keep one line per step.
@@ -342,11 +339,13 @@ watering can, scoring, timer and end screen, intro UI.
   `### Timer and end screen step, done`.
 - **Timer and end screen: done, verified in Play Mode.** Same section.
 - **Intro UI: done, verified in Play Mode.** The start panel covers it.
-- **Atoms decoupling: code done, needs Inspector wiring.** See
-  `### Atoms decoupling step, code done — needs Inspector wiring`.
+- **Atoms decoupling: done, wired and verified in Play Mode.** See
+  `### Atoms decoupling step, done`.
+- **HUD wrist binding: done, wired and verified in Play Mode.** See
+  `### HUD wrist binding, done`.
 
-### Atoms decoupling step, code done — needs Inspector wiring
-Shared round state and hand state moved onto Unity Atoms assets. The rules are
+### Atoms decoupling step, done
+Shared round state and hand state live on Unity Atoms assets. The rules are
 in `### Communication`. Read those before touching an Atom.
 
 Why: prefabs could not ship complete. `GameHud.prefab` stored `session:
@@ -369,31 +368,33 @@ What each consumer lost:
 purpose. Per-plant events are not shared state, and its single planting hook is
 what stops every seed scoring twice.
 
-The base-type Atom assets exist under `Assets/ScriptableObjects/UnityAtoms/`
-in `Round/` and `Hand/`. Each Variable already carries its Changed sub-asset.
+The Atom assets live under `Assets/ScriptableObjects/UnityAtoms/` in `Round/`
+and `Hand/`. Each Variable carries its own Changed sub-asset.
 
-Inspector wiring still needed (not done by editing files alone):
-1. Create the three custom assets. Right-click in `Round/`, then
-   `Create > Sogeti > Trees for All > Atoms`: a `Game Phase` Variable named
-   `Phase`, and a `Score Tally` Event named `RoundEnded`. In `Hand/`, a
-   `Seed Definition` Variable named `SelectedSeed`.
-2. On `Phase` and `SelectedSeed`, add a Changed Event. Leave replay buffer 1.
-   `RoundEnded` needs no Changed Event.
-3. Set **Initial Value**, never Value: `Phase` to `Ready`, `SelectedSeed` to the
-   seed the hand starts with. `SeedCatalog` no longer decides that.
-   `AtomVariable.OnEnable` copies Initial Value over Value on entering Play
-   Mode, so a seed set in Value alone is wiped on the first frame. Every
-   Variable type needs an editor in `Assets/Scripts/Atoms/Editor/`, which locks
-   Value outside Play Mode and makes that mistake impossible. Add one whenever
-   a new Variable type is written.
-4. Fill every new Atom field on `GameSession`, `GamePanelController`,
-   `PlayerActionGate`, `GameRestarter`, `GameHud`, `SeedPlanter`,
-   `ToolMenuController`, `SelectedSeedReadout`, `WateringCan`,
-   `WateringCanLevelMeter` and `HudMenuLink`.
-5. Drop the scene overrides the prefabs no longer need: `session` on `GameHud`,
-   and `session`, `gate` and `restarter` on `GamePanel`. Keep `playerHead`.
+Inspector wiring facts a rebuilt asset or prefab would lose:
+- `Round/Phase` (Game Phase Variable) and `Hand/SelectedSeed` (Seed Definition
+  Variable) each carry a Changed Event with replay buffer 1. `RoundEnded`
+  needs none.
+- `Phase`'s Initial Value is `Ready`. `SelectedSeed`'s Initial Value is the
+  seed the hand starts with; `SeedCatalog` no longer decides that.
+  `AtomVariable.OnEnable` copies Initial Value over Value on entering Play
+  Mode, so setting Value alone would be wiped on the first frame. Every
+  Variable type has an editor in `Assets/Scripts/Atoms/Editor/` that locks
+  Value outside Play Mode and makes that mistake impossible. Add one whenever
+  a new Variable type is written.
+- Every Atom field is filled on `GameSession`, `GamePanelController`,
+  `PlayerActionGate`, `GameRestarter`, `GameHud`, `SeedPlanter`,
+  `ToolMenuController`, `SelectedSeedReadout`, `WateringCan`,
+  `WateringCanLevelMeter` and `HudMenuLink`. `GameSession` now lives on
+  `Assets/Prefabs/Player/GameSession.prefab`, nested inside `PlayerRig.prefab`,
+  rather than as a bespoke scene GameObject.
+- `GameHud` and `GamePanel` carry no `session`, `gate` or `restarter` field
+  any more; those references were replaced by the Atom fields above.
+  `GamePanelController.playerHead` is the one field that still points at a
+  scene object (`PlayerRig > Camera Offset > Main Camera`), wired as a scene
+  override, because a prefab cannot reference a scene object.
 
-### HUD wrist binding, code done — needs scene wiring
+### HUD wrist binding, done
 The HUD moved from a head-follow panel to the left wrist, sharing `ToolMenu`'s
 spot: opening the tool menu hides the HUD, closing it shows the HUD again, so
 exactly one is ever visible. `HudFollow` is deleted. `GameHud.prefab`'s root
@@ -418,15 +419,13 @@ The Atoms step later replaced `ToolMenuController.OpenChanged` with the
 `ToolMenuOpen` Variable, so `HudMenuLink` no longer needs to sit beside the
 controller. It still must not sit on the HUD root.
 
-Scene wiring still needed (not done by editing files alone):
-1. In `DevelopmentScene.unity`, reparent the `GameHud` instance from
-   `PlayerRig > Camera Offset` to `PlayerRig > ... > Left Controller`, the
-   same parent as `ToolMenu`. The prefab's own local offset already matches
-   `ToolMenu`'s slot.
-2. On the scene's `ToolMenu` instance, drag the scene's `GameHud` object into
-   the new `HudMenuLink.Hud Root` field.
-3. `PlayerActionGate.objectsToDeactivate`'s `GameHud` entry survives the
-   reparent untouched — it is an object reference, not a hierarchy path.
+Scene wiring facts a rebuilt rig would lose:
+- `GameHud` is a nested prefab instance under `PlayerRig.prefab > ... > Left
+  Controller`, the same parent as `ToolMenu`, at the same wrist slot.
+- `ToolMenu.prefab`'s `HudMenuLink.hudRoot` references that `GameHud`
+  instance across the nested prefab boundary.
+- `PlayerActionGate.objectsToDeactivate`'s `GameHud` entry is an object
+  reference, not a hierarchy path, so it survived the reparent untouched.
 
 ### Timer and end screen step, done
 A round clock, a score, a head HUD, and one world panel that serves both the
@@ -438,7 +437,7 @@ Design answers from the user:
 - **A head-locked HUD with a soft follow.** Up and left of centre, 1.2 m deep.
   A rigid head lock puts text at the lens edge, where it blurs and strains the
   eyes. Superseded later by a wrist-bound HUD — see
-  `### HUD wrist binding, code done — needs scene wiring`.
+  `### HUD wrist binding, done`.
 - **The seed readout stays on the right hand.** The HUD carries global state,
   the hand carries hand state. `SelectedSeedReadout` is a child of `SeedPlanter`,
   so it already leaves with the can. A HUD copy would re-implement that.
@@ -517,7 +516,7 @@ instance loses all of these.
    game never starts.
 3. `GameHud.prefab` sits under `PlayerRig > ... > Left Controller`, the same
    wrist anchor as `ToolMenu`, at the same local offset. See
-   `### HUD wrist binding, code done — needs scene wiring`.
+   `### HUD wrist binding, done`.
 4. `PlayerActionGate.behavioursToSuspend` holds three: `Left Controller >
    Controller Input Action Manager`, `Locomotion > Move > Dynamic Move
    Provider`, `Locomotion > Turn > Snap Turn Provider`.
@@ -561,8 +560,9 @@ Rules that later steps must not re-derive:
   bottom edge.** Play, Back and Play again then land in the same spot, so the
   panel height can change without moving the primary action.
 
-Scene fields left empty on purpose: `GamePanelController.session`, `.gate`,
-`.restarter`, `.playerHead`, and `GameHud.session`.
+`GamePanelController.session`, `.gate`, `.restarter`, and `GameHud.session`
+existed at this point but were removed by the later Atoms decoupling step. See
+`### Atoms decoupling step, done`.
 
 ### Tool and seed menu step, done
 The player opens a left wrist panel, picks a seed or the watering can, and the

@@ -258,6 +258,13 @@ PrefabInstance:
       propertyPath: startRoundRequested
       value: 
       objectReference: {fileID: 11400000, guid: a1c4f0e2b5d34f1ea0d5c71e9b204305, type: 2}
+    - target: {fileID: 7400000000000000024, guid: 3c9e6f5a0d8b6c4f1e2a7b9c3d5f8a04, type: 3}
+      propertyPath: m_text
+      value: 'This wasteland is barren and dead.
+
+        Plant seeds and water them
+        so they can root and bring back life to this land. '
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
