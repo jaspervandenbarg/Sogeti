@@ -189,8 +189,14 @@ Keep this current. It saves a rediscovery pass at the start of the next session.
   rules. It references no package. The EditMode tests force it.
 - `Sogeti.Watering` (`Assets/Scripts/Watering/`) holds the pour rules, for the
   same reason. `PourFlow` and `WaterTank` need no scene and no package.
+- `Sogeti.Game` (`Assets/Scripts/Game/`) holds the round rules: the clock, the
+  score, the clock format and the phase machine. It references `Sogeti.Planting`
+  alone, because `ScoreTally` keys its per-seed rows by `SeedDefinition`. Both
+  assemblies are package-free, so the EditMode tests still run with no headset.
+  Adding a package here would pull it into the test assembly for no gain.
 - All other gameplay code compiles into `Assembly-CSharp`. That assembly
-  auto-references `Sogeti.Planting`, so glue code needs no new asmdef.
+  auto-references `Sogeti.Planting` and `Sogeti.Game`, so glue code needs no new
+  asmdef.
 - Code that needs a package (Input System, TextMesh Pro, XRI) belongs in
   `Assembly-CSharp`. Adding those references to `Sogeti.Planting` would pull
   packages into the test assembly for no gain.
@@ -243,8 +249,10 @@ Put a new rule in layer 2, where a test can reach it without a headset.
 - - Show Restart button
 
 ## Next Step Claude progress (overwrite when finished)
-Not started. Next up per `### Build order`: scoring. Ask the user for the
-scoring design answers before writing any code.
+Backlog complete. Polish only. Every step in `### Build order` is done and
+verified in Play Mode, including the intro UI, which the start panel covers.
+`## How to play` in `README.md` at the git root still wants the round length,
+the start panel, and the restart added.
 
 ## Progress
 Update this section at the end of every step. Keep one line per step.
@@ -268,9 +276,178 @@ watering can, scoring, timer and end screen, intro UI.
   `### Watering can step, built`.
 - **Tool and seed menu: done, verified in Play Mode.** See
   `### Tool and seed menu step, done`.
-- Scoring: not started.
-- Timer and end screen: not started.
-- Intro UI: not started.
+- **Scoring: done, verified in Play Mode.** See
+  `### Timer and end screen step, done`.
+- **Timer and end screen: done, verified in Play Mode.** Same section.
+- **Intro UI: done, verified in Play Mode.** The start panel covers it.
+
+### HUD wrist binding, code done — needs scene wiring
+The HUD moved from a head-follow panel to the left wrist, sharing `ToolMenu`'s
+spot: opening the tool menu hides the HUD, closing it shows the HUD again, so
+exactly one is ever visible. `HudFollow` is deleted. `GameHud.prefab`'s root
+now carries a fixed wrist offset, position `(0, 0.1, 0.05)`, rotation `-10`
+about X — the same numbers as `ToolMenu`'s instance override in
+`PlayerRig.prefab`, so the two panels sit in the same spot.
+
+New type: `HudMenuLink` (`Assets/Scripts/UI/ToolMenu/`), added to
+`ToolMenu.prefab`'s root next to `ToolMenuController`, not to `GameHud`'s
+root.
+
+Rule later steps must not re-derive:
+- **A listener that toggles a GameObject must not live on that GameObject.**
+  `HudMenuLink` subscribes to `ToolMenuController.OpenChanged` and sets
+  `hudRoot.SetActive(!open)`. Putting that subscription on `GameHud`'s own
+  root would unsubscribe on the very `SetActive(false)` it triggers, so the
+  next `OpenChanged(false)` — the menu closing — would have no listener left
+  to show the HUD again. `ToolMenu`'s root GameObject is never deactivated
+  (only `panelRoot`, a child, and `ToolMenuController.enabled`), so it is the
+  safe host.
+
+Scene wiring still needed (not done by editing files alone):
+1. In `DevelopmentScene.unity`, reparent the `GameHud` instance from
+   `PlayerRig > Camera Offset` to `PlayerRig > ... > Left Controller`, the
+   same parent as `ToolMenu`. The prefab's own local offset already matches
+   `ToolMenu`'s slot.
+2. On the scene's `ToolMenu` instance, drag the scene's `GameHud` object into
+   the new `HudMenuLink.Hud Root` field.
+3. `PlayerActionGate.objectsToDeactivate`'s `GameHud` entry survives the
+   reparent untouched — it is an object reference, not a hierarchy path.
+
+### Timer and end screen step, done
+A round clock, a score, a head HUD, and one world panel that serves both the
+start screen and the game over screen. Code in `Assets/Scripts/Game/`,
+`Assets/Scripts/Session/`, `Assets/Scripts/UI/Hud/` and
+`Assets/Scripts/UI/Panels/`.
+
+Design answers from the user:
+- **A head-locked HUD with a soft follow.** Up and left of centre, 1.2 m deep.
+  A rigid head lock puts text at the lens edge, where it blurs and strains the
+  eyes. Superseded later by a wrist-bound HUD — see
+  `### HUD wrist binding, code done — needs scene wiring`.
+- **The seed readout stays on the right hand.** The HUD carries global state,
+  the hand carries hand state. `SelectedSeedReadout` is a child of `SeedPlanter`,
+  so it already leaves with the can. A HUD copy would re-implement that.
+- **The round is a serialized field, default 180 s.**
+- **Restart reloads the scene.** Fresh by construction, so no reset list can rot.
+- **Restart returns to the start panel.** A reload cannot carry a "skip the
+  intro" flag without persistence, and the user asked for no saved state.
+  `GameSession.autoStartOnLoad` flips this if the extra press annoys.
+- **The start panel leads with the goal**, then `Controls`, then `Play` last.
+- **The game over panel lists one row per seed type**, with grown and planted
+  counts.
+
+New types:
+- `GameCountdown`, `ScoreTally`, `SeedTally`, `CountdownDisplay`, `GamePhase`,
+  `GamePhaseRules`. All pure, all in `Sogeti.Game`.
+- `GameSession`, `ScoreCollector`, `PlayerActionGate`, `GameRestarter`.
+- `GameHud`, `GamePanelView`, `GamePanelController`, `WorldPanelPlacer`.
+
+Rules that later steps must not re-derive:
+- **`ControllerInputActionManager.enabled = false` is a clean teleport gate.**
+  Its `OnDisable` only calls `TeardownInteractorEvents()`, so `OnStartTeleport`
+  can never fire. Its `OnEnable` forces the Teleport Interactor GameObject
+  inactive, so re-enabling self-heals. Do not restore that interactor by hand.
+- **The gate still deactivates the left Teleport Interactor.** A player holding
+  the teleport stick as the clock expires leaves a live arc, because the
+  postponed deactivate in `Update` never runs on a disabled manager.
+- **On the resume path, activate GameObjects before enabling Behaviours.**
+  `ControllerInputActionManager.OnEnable` deactivates the teleport interactor.
+  The reverse order revives a live interactor with nothing driving it.
+- **`ToolMenuController.Close()` un-stows the hand.** `SetOpen` calls
+  `SetToolsStowed(open)`. So the gate closes the menu first, then stows. The
+  reverse order hands the player a live planter behind the game over panel.
+- **`SeedPlanter.PlantPlaced` is the only planting hook.** `Plant.Planted`
+  carries the same award and fires first, inside `Initialize`. Reading both
+  counts every seed twice.
+- **The HUD sits on layer 2 and carries no raycaster.** A raycaster 1.2 m from
+  the eyes would eat the right hand ray. The panel is clickable, so it sits on
+  layer 5 with both raycasters. See `## Layer conventions`.
+- **`GameSession` raises the clock on whole seconds only.** A per-frame raise
+  rebuilds the TMP mesh 90 times a second for a clock with no decimals.
+- `GameSession.StartRound` resets the tally before it raises `PhaseChanged`.
+  That event un-hides the HUD, and a HUD showing the old score for one frame
+  reads as a failed restart.
+- The panel places itself one frame after the request. The head pose is not
+  settled on the frame a scene loads. `PlantWaterMeter` skips a frame for the
+  same reason.
+- A world-space Canvas faces **away** from the viewer.
+  `WorldUILookAtPlayer.rotationOffset` stays `0,180,0` on the panel, or the
+  text mirrors.
+- Plants keep growing after the round ends, on purpose. It looks alive behind
+  the panel. `ScoreCollector` drops every award unless the phase is `Playing`.
+
+Tests: `GameCountdownTests`, `ScoreTallyTests`, `CountdownDisplayTests` and
+`GamePhaseRulesTests`, 70 new cases. **241 total, all green**, run in batch mode
+against Unity 6000.3.24f1.
+
+**Wired into the rig and verified in Play Mode.** See
+`### Timer step, scene wiring` for the field list a rebuilt rig would lose.
+
+### Timer step, scene wiring
+Facts about the rig and the scene. A rebuilt rig or a re-dragged prefab
+instance loses all of these.
+
+1. `GameSession` sits on its own root GameObject, named `GameSession`, next to
+   `ScoreCollector`, `PlayerActionGate`, `GameRestarter` and
+   `GamePanelController`. All five live on that one GameObject.
+2. **`GamePanel.prefab` starts active. `GameHud.prefab` starts inactive.**
+   `GamePanelController` and `GamePanelView` live on the `GamePanel` root, and
+   `GamePanelView.Awake()` already hides its own child `Panel` canvas. A root
+   set inactive in the Inspector never runs that `Awake`, never subscribes to
+   `GameSession.PhaseChanged`, and so can never show itself again. `GameHud`
+   has no such self-managed visibility: its root is the thing
+   `PlayerActionGate.objectsToDeactivate` turns on and off directly, so it
+   alone starts inactive. Getting this backwards was the one bug scene wiring
+   found: an inactive `GamePanel` means the start screen never appears and the
+   game never starts.
+3. `GameHud.prefab` sits under `PlayerRig > ... > Left Controller`, the same
+   wrist anchor as `ToolMenu`, at the same local offset. See
+   `### HUD wrist binding, code done — needs scene wiring`.
+4. `PlayerActionGate.behavioursToSuspend` holds three: `Left Controller >
+   Controller Input Action Manager`, `Locomotion > Move > Dynamic Move
+   Provider`, `Locomotion > Turn > Snap Turn Provider`.
+5. `PlayerActionGate.objectsToDeactivate` holds two: `Left Controller >
+   Teleport Interactor` and the `GameHud` root.
+6. `PlayerActionGate.toolSwitch` is the `RightHandToolSwitch` on `Right
+   Controller`. `.toolMenu` is the `ToolMenuController` on `Left Controller >
+   ToolMenu`.
+7. `GamePanelController.playerHead` points at `PlayerRig > Camera Offset >
+   Main Camera`.
+8. `ScoreCollector.planter` points at the `SeedPlanter` on `Right Controller`,
+   the one source `PlayerActionGate` never has to touch directly, because
+   `RightHandToolSwitch.SetToolsStowed` already empties that hand.
+9. `GameSession.roundSeconds` is `180`. `autoStartOnLoad` stays unticked, so a
+   restart returns to the start panel rather than skipping it.
+
+Tests: `Assets/Tests/EditMode/`, unaffected by scene wiring. **241 total**,
+still green after the wiring pass.
+
+### Timer and end screen prefabs, built
+`Assets/Prefabs/UI/GamePanel.prefab` and `Assets/Prefabs/UI/GameHud.prefab`,
+hand-authored YAML like `ToolMenu.prefab`. Both import clean and every
+reference inside them resolves.
+
+- `GamePanel` is layer 5. The root carries `WorldPanelPlacer`,
+  `WorldUILookAtPlayer`, `GamePanelView` and `GamePanelController`. The child
+  `Panel` holds the world Canvas, both raycasters and the three groups.
+  640 x 560 at scale 0.0015, so it reads about 25 degrees wide at 2 m.
+- `GameHud` is layer 2 and carries no raycaster. The root carries `GameHud`
+  alone; its Transform holds the fixed wrist offset instead of a follow
+  component. The child `Panel` is 280 x 100 at scale 0.001.
+- The game over rows reuse `ToolMenuEntry.prefab` in a `GridLayoutGroup`, two
+  columns of 260 x 96. A narrower cell clips `Broadleaf 1 grown / 2 planted`.
+
+Rules that later steps must not re-derive:
+- **`GamePanelView` sits on the always-active root, not on `panelRoot`.** Its
+  `Awake` hides `panelRoot`. A view living on that hidden canvas would run
+  `Awake` on the frame `ShowStart` activates it, and hide itself again.
+  `ToolMenuController` sits on its root for the same reason.
+- **Each screen is a full-stretch group, and the action button anchors to the
+  bottom edge.** Play, Back and Play again then land in the same spot, so the
+  panel height can change without moving the primary action.
+
+Scene fields left empty on purpose: `GamePanelController.session`, `.gate`,
+`.restarter`, `.playerHead`, and `GameHud.session`.
 
 ### Tool and seed menu step, done
 The player opens a left wrist panel, picks a seed or the watering can, and the

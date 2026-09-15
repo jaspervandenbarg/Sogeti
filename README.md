@@ -6,6 +6,14 @@ Please refer to the "Opdrachtomschrijving XR developer Sogeti.pdf" for the assig
 
 Test the game on PC with a mouse and keyboard. No headset is needed.
 
+**Start**
+1. A panel spawns in front of you. Aim at it with `Y`, the right hand ray
+   planting and the tool menu also use, and click a button with the left
+   mouse button.
+2. `Controls` shows the control list. `Back` returns to the start screen.
+3. `Play` starts the round and hides the panel. Teleport, the tool menu,
+   planting and watering all unlock at the same moment.
+
 **Move**
 1. Hold the right mouse button to look around.
 2. Press `T`, then `1`, to aim the teleport arc.
@@ -30,9 +38,13 @@ Test the game on PC with a mouse and keyboard. No headset is needed.
 4. Dip the spout in the pond to refill the can.
 
 **Goal**
+- The round lasts 3 minutes. A HUD up and to the left shows the time and the
+  score once you press `Play`.
 - Grow each plant through 3 stages.
 - Water a plant before its meter empties. An empty meter kills the plant.
 - Earn points for each stage a plant reaches. Score as many points as possible.
+- When the clock hits zero, a panel shows your score and a `Restart` button.
+  Restart reloads the level, so the score never carries over between rounds.
 
 ## Packages used:
 - Terrain Toolkit: tilled grass and rock textures
@@ -43,6 +55,14 @@ Test the game on PC with a mouse and keyboard. No headset is needed.
 - - https://assetstore.unity.com/packages/3d/props/tools/garden-realistic-tools-68960
 
 ## Project art
+Twinkle sounds for tree growth
+- https://freesound.org/people/Chanhun/sounds/161322/
+
+Watering sound
+- https://freesound.org/people/wobesound/sounds/488401/
+- https://freesound.org/people/swemcps/sounds/721357/
+- https://freesound.org/people/wyronroberth/sounds/516257/ 
+
 Made for this project, not third party.
 
 - `Assets/Textures/UI/Droplet.png`: the water meter droplet.

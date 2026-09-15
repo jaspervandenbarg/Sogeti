@@ -4,6 +4,7 @@
     "references": [
         "Sogeti.Planting",
         "Sogeti.Watering",
+        "Sogeti.Game",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],

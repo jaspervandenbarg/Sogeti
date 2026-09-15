@@ -1,0 +1,16 @@
+{
+    "name": "Sogeti.Game",
+    "rootNamespace": "Sogeti.Game",
+    "references": [
+        "Sogeti.Planting"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
