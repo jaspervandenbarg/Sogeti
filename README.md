@@ -1,6 +1,6 @@
 ### Trees for All
 
-Please refer to the "Opdrachtomschrijving XR developer Sogeti.pdf" for the assignment.
+Please refer to the `Opdrachtomschrijving XR developer Sogeti.pdf` for the assignment.
 
 ## Notes and Disclaimers
 1. This project was build by `Jasper van den Barg` with the help of `AI agents`
