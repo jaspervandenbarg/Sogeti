@@ -9,7 +9,10 @@ Please refer to the "Opdrachtomschrijving XR developer Sogeti.pdf" for the assig
 4. I did not receive any response on point 2 until `15-09-2026`, the day before the technical interview. By this time the assignment was already largely finished.
 5. On editor startup ignore `UnityAtoms` errors, just clear them and it will be fine.
 6. `Functionality` is tested, due to lack of VR hardware `playability` has not been tested.
-7. Project builds without Build errors
+7. `Gameplay` decisions such as `watering speed`, `drying speed`, `filling speed` have not be optimised because testing in `Unity` was horrible.
+8. Project builds without Build errors
+
+
 ## Design Decisions
 
 # Gameplay Decisions
