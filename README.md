@@ -21,10 +21,10 @@ Test the game on PC with a mouse and keyboard. No headset is needed.
 4. Press `1` again to walk.
 
 **Pick a tool or a seed**
-1. Press `T`, then `N`, to open the menu on the left wrist.
+1. Press `T`, then `N`, to open the menu on the left wrist. This hides the HUD.
 2. Press `Y` to aim the right hand ray. Click an entry to pick it.
 3. The menu marks one entry at a time, because the hand holds one tool at a time.
-4. Press `N` again to close the menu.
+4. Press `N` again to close the menu. The HUD shows again.
 
 **Plant a seed**
 1. Press `Y` to aim the seed ray.
@@ -38,8 +38,9 @@ Test the game on PC with a mouse and keyboard. No headset is needed.
 4. Dip the spout in the pond to refill the can.
 
 **Goal**
-- The round lasts 3 minutes. A HUD up and to the left shows the time and the
-  score once you press `Play`.
+- The round lasts 3 minutes. A HUD on the left wrist shows the time and the
+  score once you press `Play`. It shares its spot with the tool menu, so only
+  one of the two shows at a time.
 - Grow each plant through 3 stages.
 - Water a plant before its meter empties. An empty meter kills the plant.
 - Earn points for each stage a plant reaches. Score as many points as possible.
