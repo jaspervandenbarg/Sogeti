@@ -81,19 +81,27 @@ Please refer to the `Opdrachtomschrijving XR developer Sogeti.pdf` for the assig
 - - `Watering can`
 - - `Seeds`
 
-# Nice to haves
+# Nice to haves which I did not have time for but would have loved to implement
 - `Axe` to cut down dead `branches`/`trees`
 - `Pickaxe` to remove rocks
-- `Music`
-- `Haptic` feedback
-- `Weather system` 
+- `Music` some chill background music that increases the pace as time decreases.
+- - My brother used to make my background music
+- `Haptic feedback`
+- `Weather system`
+- - Sunny makes the plants dry out faster
+- - Cloudy makes them dry out slower
+- - Rain makes them grow 
+- `Difficulty` that impacts:
+- - How fast plants dry out and are watered.
+- - How much water the watering can holds.
+- - How many obstacles are spawned on the terrain.
 
 ## How to play
 
 # Testing on Quest 3
 1. Open the project.
 2. Make sure `DevelopmentScene` is added to the build list and selected
-3. Build project.
+3. Build the project.
 
 # Testing the game on PC with a mouse and keyboard. No headset is needed.
 
