@@ -1,4 +1,4 @@
-using Sogeti.Interaction;
+using Sogeti.Atoms;
 using Sogeti.Planting;
 using TMPro;
 using UnityEngine;
@@ -9,13 +9,13 @@ namespace Sogeti.UI.WorldUI
     /// <summary>
     /// Names the seed in the right hand.
     /// It sits under the planter, so it leaves with it when the can comes out and
-    /// while the menu stows the hand. The panel names the seed in both cases.
+    /// while the menu stows the hand.
     /// </summary>
     [DisallowMultipleComponent]
     public class SelectedSeedReadout : MonoBehaviour
     {
         [SerializeField]
-        private SeedPlanter planter;
+        private SeedDefinitionVariable selectedSeed;
         [SerializeField]
         private Image icon;
         [SerializeField]
@@ -23,23 +23,24 @@ namespace Sogeti.UI.WorldUI
 
         private void OnEnable()
         {
-            if (planter == null)
+            if (selectedSeed == null)
             {
-                Debug.LogError($"{name}: no planter assigned, the readout stays empty.", this);
+                Debug.LogError($"{name}: no selected seed Variable assigned, the readout stays empty.", this);
                 return;
             }
 
-            planter.SeedChanged += Show;
+            selectedSeed.Changed.Register(Show);
 
-            // The readout sleeps while the hand is stowed, so it misses every change it was away for.
-            Show(planter.SelectedSeed);
+            // Nobody raises Changed for the starting seed, only the Initial Value sets
+            // it, so a direct read is the only way to see it before the first pick.
+            Show(selectedSeed.Value);
         }
 
         private void OnDisable()
         {
-            if (planter != null)
+            if (selectedSeed != null)
             {
-                planter.SeedChanged -= Show;
+                selectedSeed.Changed.Unregister(Show);
             }
         }
 

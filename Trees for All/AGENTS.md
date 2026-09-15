@@ -178,7 +178,8 @@ root, not next to `Assets/`.
 - Don't add third-party assets without asking.
 - Giant MonoBehaviours.
 - God classes.
-- Static global state.
+- Static global state. This means mutable statics and singletons. A static pure
+  function is fine, and the rules layer is built from them.
 - Quest-only APIs with no PC simulation path, unless isolated behind an interface (see testing constraint above).
 
 ## High level architecture
@@ -194,9 +195,18 @@ Keep this current. It saves a rediscovery pass at the start of the next session.
   alone, because `ScoreTally` keys its per-seed rows by `SeedDefinition`. Both
   assemblies are package-free, so the EditMode tests still run with no headset.
   Adding a package here would pull it into the test assembly for no gain.
+- `Sogeti.Atoms` (`Assets/Scripts/Atoms/`) holds the hand-written Unity Atoms
+  types the base package does not ship: the `SeedDefinition` and `GamePhase`
+  families, plus `ScoreTallyEvent`. It references Unity Atoms, `Sogeti.Planting`
+  and `Sogeti.Game`. The reference runs one way, so the three assemblies above
+  stay package-free.
+- `Sogeti.Atoms.Editor` (`Assets/Scripts/Atoms/Editor/`) holds one inspector per
+  custom Variable type. Unity Atoms ships an editor for every type it generates,
+  and a hand-written type without one gets Unity's default inspector, which
+  edits the wrong field. See the wiring note in `### Atoms decoupling step`.
 - All other gameplay code compiles into `Assembly-CSharp`. That assembly
-  auto-references `Sogeti.Planting` and `Sogeti.Game`, so glue code needs no new
-  asmdef.
+  auto-references `Sogeti.Planting`, `Sogeti.Game` and `Sogeti.Atoms`, so glue
+  code needs no new asmdef.
 - Code that needs a package (Input System, TextMesh Pro, XRI) belongs in
   `Assembly-CSharp`. Adding those references to `Sogeti.Planting` would pull
   packages into the test assembly for no gain.
@@ -212,9 +222,52 @@ Keep this current. It saves a rediscovery pass at the start of the next session.
 Put a new rule in layer 2, where a test can reach it without a headset.
 
 ### Communication
-- ScriptableObjects hold data. Plain C# events carry state changes.
-- Unity Atoms keeps one job, the camera position feeding the world space UI.
-  A shared score or timer Atom is static global state.
+ScriptableObjects hold data. Unity Atoms assets carry shared state between
+systems that must not know each other. Plain C# events carry per-instance state.
+
+**Atoms are the broadcast channel, not the store.** `ScoreTally` still owns the
+score. `GameCountdown` still owns the clock. `GameSession` still owns the phase
+machine. Each writes its value out to an Atom, and consumers read the Atom only.
+A missing Atom must cost the broadcast, never the system itself, so null-guard
+every Atom field.
+
+One exception: `SelectedSeed`. The Variable owns the seed because every
+candidate owner gets deactivated. `RightHandToolSwitch` calls `SetActive` on the
+tool objects, so `SeedPlanter` sleeps while the menu is open.
+
+Rules that later steps must not re-derive:
+- Keep Atoms in `Assembly-CSharp` and `Sogeti.Atoms`. `Sogeti.Game`,
+  `Sogeti.Planting` and `Sogeti.Watering` stay package-free, so the EditMode
+  tests run with no headset.
+- **A value shown as text belongs in an `IntVariable`.** Atoms drops a write
+  that changes nothing, so whole seconds throttle the TMP rebuild for free. A
+  `FloatVariable` of raw seconds fires every frame, 90 times a second on Quest 3.
+- **Commands use `VoidEvent` with the no-argument `Register(Action)`.** The
+  `Action<T>` overload replays the last value to each new subscriber, which
+  would reload the scene every time something registers for a restart.
+- **Give every Variable asset a Changed Event sub-asset.** `SetValue` raises
+  nothing while that field is null, so a write made before the first listener
+  registers is lost.
+- **Force the opening value out in `Start`**, with `SetValue(value,
+  forceEvent: true)`. A plain write of the Initial Value changes nothing, leaves
+  the replay buffer empty, and a consumer enabled later reads a blank channel.
+  `GameSession` does this for `Score`, `SecondsRemaining` and `Phase`.
+- **A Variable with no continuous producer needs the reverse fix: the consumer
+  reads `.Value` directly on enable, alongside registering for `.Changed`.**
+  `SelectedSeed` has no owner that writes its starting value — nothing calls
+  `StartRound` before the first pick — so nothing is ever in the replay buffer
+  until the player chooses a seed. `SelectedSeedReadout`,
+  `WateringCanLevelMeter` and `HudMenuLink` all read their Atom's `.Value`
+  once in `OnEnable`, in addition to registering, for exactly this reason. The
+  bug from skipping this: the seed readout kept whatever the prefab shipped
+  with, until the first menu pick, because `Register` only replays a value
+  that was actually raised, and the Variable's own Initial Value never raises.
+- **A listener must not live on the GameObject it toggles.** `HudMenuLink` hides
+  the HUD root, so it lives elsewhere. `SetActive(false)` would unregister it,
+  and the close write would find no listener to bring the HUD back.
+
+Per-plant state stays on plain C# events. A shared asset cannot carry
+per-instance state.
 - `SeedPlanter` raises `PlantPlaced` and `PlantRefused`. `Plant` raises
   `Planted`, `StageAdvanced` and `Died`, and each event carries its point award.
   The scoring step subscribes to those. It must never poll every plant.
@@ -258,6 +311,11 @@ The HUD wrist binding is code-complete but not yet wired in the scene. See
 under `Left Controller` and wire `HudMenuLink.hudRoot`, then verify in Play
 Mode and update that section's heading to "done".
 
+The Atoms decoupling step is code-complete and needs Inspector wiring. See
+`### Atoms decoupling step, code done — needs Inspector wiring`. Create the
+three custom Atom assets, fill every new Atom field, then drop the scene
+overrides the prefabs no longer need.
+
 ## Progress
 Update this section at the end of every step. Keep one line per step.
 
@@ -284,6 +342,56 @@ watering can, scoring, timer and end screen, intro UI.
   `### Timer and end screen step, done`.
 - **Timer and end screen: done, verified in Play Mode.** Same section.
 - **Intro UI: done, verified in Play Mode.** The start panel covers it.
+- **Atoms decoupling: code done, needs Inspector wiring.** See
+  `### Atoms decoupling step, code done — needs Inspector wiring`.
+
+### Atoms decoupling step, code done — needs Inspector wiring
+Shared round state and hand state moved onto Unity Atoms assets. The rules are
+in `### Communication`. Read those before touching an Atom.
+
+Why: prefabs could not ship complete. `GameHud.prefab` stored `session:
+{fileID: 0}` and a scene override patched it. `GamePanel.prefab` needed four.
+Components also failed alone. A prefab that references an asset needs neither.
+
+What each consumer lost:
+- `GameHud` lost `GameSession`. It reads `Score` and `SecondsRemaining`.
+- `GamePanelController` lost `session`, `gate` and `restarter`. It reads `Phase`
+  and `RoundEnded`, and raises `StartRoundRequested` and `RestartRequested`.
+- `PlayerActionGate` reads `Phase` and drives itself. The panel no longer calls
+  `SetPlayerActionsEnabled`.
+- `GameRestarter` listens for `RestartRequested`.
+- `SeedPlanter`, `ToolMenuController` and `SelectedSeedReadout` share
+  `SelectedSeed`. `SeedPlanter.SelectSeed` and `SeedChanged` are gone.
+- `WateringCanLevelMeter` lost `WateringCan` and its per-frame poll.
+- `HudMenuLink` lost `ToolMenuController`. `OpenChanged` is gone.
+
+`ScoreCollector` keeps its `GameSession` and `SeedPlanter` references on
+purpose. Per-plant events are not shared state, and its single planting hook is
+what stops every seed scoring twice.
+
+The base-type Atom assets exist under `Assets/ScriptableObjects/UnityAtoms/`
+in `Round/` and `Hand/`. Each Variable already carries its Changed sub-asset.
+
+Inspector wiring still needed (not done by editing files alone):
+1. Create the three custom assets. Right-click in `Round/`, then
+   `Create > Sogeti > Trees for All > Atoms`: a `Game Phase` Variable named
+   `Phase`, and a `Score Tally` Event named `RoundEnded`. In `Hand/`, a
+   `Seed Definition` Variable named `SelectedSeed`.
+2. On `Phase` and `SelectedSeed`, add a Changed Event. Leave replay buffer 1.
+   `RoundEnded` needs no Changed Event.
+3. Set **Initial Value**, never Value: `Phase` to `Ready`, `SelectedSeed` to the
+   seed the hand starts with. `SeedCatalog` no longer decides that.
+   `AtomVariable.OnEnable` copies Initial Value over Value on entering Play
+   Mode, so a seed set in Value alone is wiped on the first frame. Every
+   Variable type needs an editor in `Assets/Scripts/Atoms/Editor/`, which locks
+   Value outside Play Mode and makes that mistake impossible. Add one whenever
+   a new Variable type is written.
+4. Fill every new Atom field on `GameSession`, `GamePanelController`,
+   `PlayerActionGate`, `GameRestarter`, `GameHud`, `SeedPlanter`,
+   `ToolMenuController`, `SelectedSeedReadout`, `WateringCan`,
+   `WateringCanLevelMeter` and `HudMenuLink`.
+5. Drop the scene overrides the prefabs no longer need: `session` on `GameHud`,
+   and `session`, `gate` and `restarter` on `GamePanel`. Keep `playerHead`.
 
 ### HUD wrist binding, code done — needs scene wiring
 The HUD moved from a head-follow panel to the left wrist, sharing `ToolMenu`'s
@@ -299,13 +407,16 @@ root.
 
 Rule later steps must not re-derive:
 - **A listener that toggles a GameObject must not live on that GameObject.**
-  `HudMenuLink` subscribes to `ToolMenuController.OpenChanged` and sets
-  `hudRoot.SetActive(!open)`. Putting that subscription on `GameHud`'s own
-  root would unsubscribe on the very `SetActive(false)` it triggers, so the
-  next `OpenChanged(false)` — the menu closing — would have no listener left
-  to show the HUD again. `ToolMenu`'s root GameObject is never deactivated
-  (only `panelRoot`, a child, and `ToolMenuController.enabled`), so it is the
-  safe host.
+  `HudMenuLink` reads the `ToolMenuOpen` Atom and sets `hudRoot.SetActive(!open)`.
+  Putting that subscription on `GameHud`'s own root would unregister on the very
+  `SetActive(false)` it triggers, so the close write would have no listener left
+  to show the HUD again. Any object the gate leaves alone hosts it safely.
+  `ToolMenu`'s root is one: only `panelRoot`, a child, and
+  `ToolMenuController.enabled` ever switch off.
+
+The Atoms step later replaced `ToolMenuController.OpenChanged` with the
+`ToolMenuOpen` Variable, so `HudMenuLink` no longer needs to sit beside the
+controller. It still must not sit on the HUD root.
 
 Scene wiring still needed (not done by editing files alone):
 1. In `DevelopmentScene.unity`, reparent the `GameHud` instance from

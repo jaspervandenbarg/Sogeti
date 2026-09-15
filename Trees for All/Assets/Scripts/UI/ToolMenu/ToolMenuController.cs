@@ -1,6 +1,7 @@
-using System;
+using Sogeti.Atoms;
 using Sogeti.Interaction;
 using Sogeti.Planting;
+using UnityAtoms.BaseAtoms;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -17,11 +18,16 @@ namespace Sogeti.UI.ToolMenu
         [SerializeField]
         private GameObject panelRoot;
 
+        [Tooltip("True while this panel is open. The HUD hides on it.")]
+        [SerializeField]
+        private BoolVariable toolMenuOpen;
+
         [Header("Hand")]
         [SerializeField]
         private RightHandToolSwitch toolSwitch;
+        [Tooltip("The seed the hand plants next. The menu writes it here, never into the planter.")]
         [SerializeField]
-        private SeedPlanter planter;
+        private SeedDefinitionVariable selectedSeed;
         [Tooltip("The planter's place in the tools array. A seed pick switches to it first.")]
         [SerializeField]
         private int planterToolIndex;
@@ -36,8 +42,6 @@ namespace Sogeti.UI.ToolMenu
         [Tooltip("Opens and closes the panel. XRI Default has no left secondary action, so this one is defined here.")]
         [SerializeField]
         private InputActionProperty toggleAction;
-
-        public event Action<bool> OpenChanged;
 
         public bool IsOpen { get; private set; }
 
@@ -55,6 +59,7 @@ namespace Sogeti.UI.ToolMenu
             }
 
             IsOpen = false;
+            PublishOpen();
         }
 
         private void OnEnable()
@@ -69,10 +74,10 @@ namespace Sogeti.UI.ToolMenu
                 toolRow.ToolChosen += OnToolChosen;
             }
 
-            // The highlight follows the hand, never the click. The hand stays the one source of truth.
-            if (planter != null)
+            // The highlight follows the Variable, never the click. The Variable stays the one source of truth.
+            if (selectedSeed != null)
             {
-                planter.SeedChanged += OnSeedChanged;
+                selectedSeed.Changed.Register(OnSeedChanged);
             }
 
             if (toolSwitch != null)
@@ -102,9 +107,9 @@ namespace Sogeti.UI.ToolMenu
                 toolRow.ToolChosen -= OnToolChosen;
             }
 
-            if (planter != null)
+            if (selectedSeed != null)
             {
-                planter.SeedChanged -= OnSeedChanged;
+                selectedSeed.Changed.Unregister(OnSeedChanged);
             }
 
             if (toolSwitch != null)
@@ -154,7 +159,15 @@ namespace Sogeti.UI.ToolMenu
                 RefreshSelection();
             }
 
-            OpenChanged?.Invoke(IsOpen);
+            PublishOpen();
+        }
+
+        private void PublishOpen()
+        {
+            if (toolMenuOpen != null)
+            {
+                toolMenuOpen.Value = IsOpen;
+            }
         }
 
         /// <summary>Repaints both rows from the hand. The rows build on their first activation, so this also runs on open.</summary>
@@ -172,10 +185,10 @@ namespace Sogeti.UI.ToolMenu
         }
 
         // The seed row speaks for the planter alone, so picking the can leaves it dark.
-        // The planter keeps its seed, so coming back restores the same one.
+        // The Variable keeps the seed, so coming back restores the same one.
         private SeedDefinition SeedOnShow()
         {
-            if (planter == null)
+            if (selectedSeed == null)
             {
                 return null;
             }
@@ -185,20 +198,21 @@ namespace Sogeti.UI.ToolMenu
                 return null;
             }
 
-            return planter.SelectedSeed;
+            return selectedSeed.Value;
         }
 
         private void OnSeedChosen(SeedDefinition seed)
         {
             // Picking a seed states an intent to plant, so the hand takes the planter with it.
+            // The tool comes first, because the write below repaints both rows.
             if (toolSwitch != null)
             {
                 toolSwitch.SelectTool(planterToolIndex);
             }
 
-            if (planter != null)
+            if (selectedSeed != null)
             {
-                planter.SelectSeed(seed);
+                selectedSeed.Value = seed;
             }
         }
 

@@ -61,6 +61,7 @@ MonoBehaviour:
     m_Bits: 192
   maxSurfaceAngle: 30
   obstacleClearance: 0.4
+  selectedSeed: {fileID: 11400000, guid: 9e4401c50bf02064fb3cdd8305b61f14, type: 2}
   seedCatalog: {fileID: 11400000, guid: 11298ce000694461a15ba10b216eff97, type: 2}
   plantPrefab: {fileID: 4820156300000000001, guid: ae421e91465348f0bc1daf709efd4199, type: 3}
   plantParent: {fileID: 0}
@@ -581,7 +582,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 76eb159dc5587934fae65fc418fc9bf0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Sogeti.UI.WorldUI.SelectedSeedReadout
-  planter: {fileID: 5910000000000000003}
+  selectedSeed: {fileID: 11400000, guid: 9e4401c50bf02064fb3cdd8305b61f14, type: 2}
   icon: {fileID: 1591622012256706446}
   label: {fileID: 1591622012256706456}
 --- !u!1001 &8403391072885464960

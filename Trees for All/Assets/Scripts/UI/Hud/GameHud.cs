@@ -1,20 +1,24 @@
 using Sogeti.Game;
-using Sogeti.Session;
 using TMPro;
+using UnityAtoms.BaseAtoms;
 using UnityEngine;
 
 namespace Sogeti.UI.Hud
 {
     /// <summary>
     /// The round clock and the score.
-    /// It writes text only when the session says a value moved. The session raises
-    /// the clock on whole seconds, so this never rebuilds a TMP mesh per frame.
+    /// Both values arrive as whole numbers, and Atoms drops a write that changes
+    /// nothing, so this never rebuilds a TMP mesh per frame. The gate hides the
+    /// HUD between rounds; the Variables replay their current value on the way
+    /// back, so no resync is needed here.
     /// </summary>
     [DisallowMultipleComponent]
     public class GameHud : MonoBehaviour
     {
         [SerializeField]
-        private GameSession session;
+        private IntVariable secondsRemaining;
+        [SerializeField]
+        private IntVariable score;
         [SerializeField]
         private TMP_Text timeText;
         [SerializeField]
@@ -22,36 +26,35 @@ namespace Sogeti.UI.Hud
 
         private void OnEnable()
         {
-            if (session == null)
+            if (secondsRemaining != null)
             {
-                Debug.LogError($"{name}: no session assigned, the HUD stays empty.", this);
-                return;
+                secondsRemaining.Changed.Register(ShowTime);
             }
 
-            session.SecondsRemainingChanged += ShowTime;
-            session.ScoreChanged += ShowScore;
-
-            // The gate hides the HUD between rounds, so it misses every change it was away for.
-            ShowTime(session.SecondsRemaining);
-            ShowScore(session.Tally != null ? session.Tally.Total : 0);
+            if (score != null)
+            {
+                score.Changed.Register(ShowScore);
+            }
         }
 
         private void OnDisable()
         {
-            if (session == null)
+            if (secondsRemaining != null)
             {
-                return;
+                secondsRemaining.Changed.Unregister(ShowTime);
             }
 
-            session.SecondsRemainingChanged -= ShowTime;
-            session.ScoreChanged -= ShowScore;
+            if (score != null)
+            {
+                score.Changed.Unregister(ShowScore);
+            }
         }
 
-        private void ShowTime(float secondsRemaining)
+        private void ShowTime(int wholeSeconds)
         {
             if (timeText != null)
             {
-                timeText.text = CountdownDisplay.Format(secondsRemaining);
+                timeText.text = CountdownDisplay.Format(wholeSeconds);
             }
         }
 

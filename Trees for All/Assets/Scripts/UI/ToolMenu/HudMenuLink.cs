@@ -1,3 +1,4 @@
+using UnityAtoms.BaseAtoms;
 using UnityEngine;
 
 namespace Sogeti.UI.ToolMenu
@@ -5,36 +6,41 @@ namespace Sogeti.UI.ToolMenu
     /// <summary>
     /// Keeps the wrist to one panel at a time.
     /// The HUD and the tool menu share the same spot, so opening the menu hides
-    /// the HUD and closing it brings the HUD back. Lives on the ToolMenu object,
-    /// which the gate never deactivates, so the subscription survives every open
-    /// and close.
+    /// the HUD and closing it brings the HUD back.
+    /// It must not live on the HUD root it toggles. SetActive(false) would
+    /// unregister this, and the close write would then find no listener to bring
+    /// the HUD back. Any object the gate leaves alone will do.
     /// </summary>
     [DisallowMultipleComponent]
     public class HudMenuLink : MonoBehaviour
     {
+        [Tooltip("True while the wrist menu is open. The tool menu writes it.")]
+        [SerializeField]
+        private BoolVariable toolMenuOpen;
+
         [Tooltip("The HUD root. It hides while the tool menu is open.")]
         [SerializeField]
         private GameObject hudRoot;
 
-        private ToolMenuController toolMenu;
-
-        private void Awake() => toolMenu = GetComponent<ToolMenuController>();
-
         private void OnEnable()
         {
-            if (toolMenu == null)
+            if (toolMenuOpen == null)
             {
                 return;
             }
 
-            toolMenu.OpenChanged += OnToolMenuOpenChanged;
+            toolMenuOpen.Changed.Register(OnToolMenuOpenChanged);
+
+            // Nobody raises Changed for the starting state, only the Initial Value
+            // sets it, so a direct read is the only way to sync before the first open.
+            OnToolMenuOpenChanged(toolMenuOpen.Value);
         }
 
         private void OnDisable()
         {
-            if (toolMenu != null)
+            if (toolMenuOpen != null)
             {
-                toolMenu.OpenChanged -= OnToolMenuOpenChanged;
+                toolMenuOpen.Changed.Unregister(OnToolMenuOpenChanged);
             }
         }
 

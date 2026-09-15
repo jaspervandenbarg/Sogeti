@@ -6,6 +6,8 @@ Please refer to the "Opdrachtomschrijving XR developer Sogeti.pdf" for the assig
 1. This project was build by `Jasper van den Barg` with the help of `AI agents`
 2. There was no access to VR hardware or a Quest 3 during the development so all testing was done in the Unity editor.
 3. Decisions were made based on the point 2.
+4. I did not receive any response on point 2 until `15-09-2026`, the day before the technical interview. By this time the assignment was already largely finished.
+5. On editor startup ignore `UnityAtoms` errors, just clear them and it will be fine.
 
 ## Design Decisions
 
@@ -17,6 +19,9 @@ Please refer to the "Opdrachtomschrijving XR developer Sogeti.pdf" for the assig
    Movement is done through teleportation.
 
 # Technical Decisions
+1. 
+
+# What I would have done differently
 1. 
 
 ## How to play

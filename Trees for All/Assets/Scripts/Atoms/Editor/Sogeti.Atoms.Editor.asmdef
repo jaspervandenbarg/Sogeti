@@ -1,0 +1,22 @@
+{
+    "name": "Sogeti.Atoms.Editor",
+    "rootNamespace": "Sogeti.Atoms.Editor",
+    "references": [
+        "UnityAtoms.UnityAtomsCore.Runtime",
+        "UnityAtoms.UnityAtomsCore.Editor",
+        "Sogeti.Atoms",
+        "Sogeti.Planting",
+        "Sogeti.Game"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

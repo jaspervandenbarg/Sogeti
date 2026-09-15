@@ -9,11 +9,11 @@ namespace Sogeti.Planting
     /// menu with its own list would let the player plant a seed the rules never
     /// search for. One asset removes that drift.
     /// </summary>
-    [CreateAssetMenu(fileName = "SeedCatalog", menuName = "Trees for All/Seed Catalog")]
+    [CreateAssetMenu(fileName = "SeedCatalog", menuName = "Sogeti/Trees for All/Seed Catalog")]
     public class SeedCatalog : ScriptableObject
     {
         [SerializeField]
-        [Tooltip("In menu order. Element 0 is the seed the planter starts with.")]
+        [Tooltip("In menu order. The seed the hand starts with is the SelectedSeed Atom's Initial Value.")]
         private SeedDefinition[] seeds = System.Array.Empty<SeedDefinition>();
 
         public IReadOnlyList<SeedDefinition> Seeds => seeds;

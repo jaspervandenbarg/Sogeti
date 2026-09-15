@@ -1,4 +1,4 @@
-using Sogeti.Interaction;
+using UnityAtoms.BaseAtoms;
 using UnityEngine;
 
 namespace Sogeti.UI.WorldUI
@@ -6,13 +6,16 @@ namespace Sogeti.UI.WorldUI
     /// <summary>
     /// The water level printed on the watering can.
     /// The can is fixed to the hand, so this needs no billboard and no distance
-    /// gate. It reads WateringCan.Fill01 and never owns the number.
+    /// gate. It reads the fill Variable and never owns the number. A still can
+    /// writes the same value, which Atoms drops, so the bar costs nothing then.
+    /// That same drop means the can's first write may raise nothing if it
+    /// already matches the Initial Value, so this also reads directly on enable.
     /// </summary>
     [DisallowMultipleComponent]
     public class WateringCanLevelMeter : MonoBehaviour
     {
         [SerializeField]
-        private WateringCan can;
+        private FloatVariable fill01;
 
         [SerializeField]
         [Tooltip("Sits at the left edge of the bar. Scaling it on X drains the fill to the left.")]
@@ -39,25 +42,34 @@ namespace Sogeti.UI.WorldUI
 
         private void Awake()
         {
-            if (can == null)
-            {
-                can = GetComponentInParent<WateringCan>();
-            }
-
             if (fillPivot != null)
             {
                 fillBaseScale = fillPivot.localScale;
             }
         }
 
-        private void Update()
+        private void OnEnable()
         {
-            if (can == null)
+            if (fill01 == null)
             {
                 return;
             }
 
-            float fill = Mathf.Clamp01(can.Fill01);
+            fill01.Changed.Register(Show);
+            Show(fill01.Value);
+        }
+
+        private void OnDisable()
+        {
+            if (fill01 != null)
+            {
+                fill01.Changed.Unregister(Show);
+            }
+        }
+
+        private void Show(float level)
+        {
+            float fill = Mathf.Clamp01(level);
 
             if (fillPivot != null)
             {

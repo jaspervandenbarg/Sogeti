@@ -1,0 +1,125 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &2660381013864942807
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5717357511063192014}
+  - component: {fileID: 3771160856567776056}
+  - component: {fileID: 22538330083031176}
+  - component: {fileID: 9003880683136082979}
+  - component: {fileID: 6201675965894024348}
+  - component: {fileID: 159764235537876512}
+  m_Layer: 0
+  m_Name: GameSession
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5717357511063192014
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2660381013864942807}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3771160856567776056
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2660381013864942807}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6c4bcef697641d4b849b059d86db22f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Sogeti.Session.GameSession
+  roundSeconds: 180
+  autoStartOnLoad: 0
+  score: {fileID: 11400000, guid: a1c4f0e2b5d34f1ea0d5c71e9b204301, type: 2}
+  secondsRemaining: {fileID: 11400000, guid: a1c4f0e2b5d34f1ea0d5c71e9b204302, type: 2}
+  phase: {fileID: 11400000, guid: 5579dbdcaaf0c374dacc0a11b5ef7836, type: 2}
+  roundEnded: {fileID: 11400000, guid: cb1bd1d1a84ae31419b4eb4f75a6f26c, type: 2}
+  startRoundRequested: {fileID: 11400000, guid: a1c4f0e2b5d34f1ea0d5c71e9b204305, type: 2}
+--- !u!114 &22538330083031176
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2660381013864942807}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 880d3638c07df7d47becae7c3fd49a50, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Sogeti.Session.ScoreCollector
+  session: {fileID: 3771160856567776056}
+  planter: {fileID: 0}
+--- !u!114 &9003880683136082979
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2660381013864942807}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a7d3d46e062149a4f818b44b3ca9df13, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Sogeti.Session.PlayerActionGate
+  phase: {fileID: 0}
+  toolSwitch: {fileID: 0}
+  toolMenu: {fileID: 0}
+  behavioursToSuspend:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  objectsToDeactivate:
+  - {fileID: 0}
+  - {fileID: 0}
+--- !u!114 &6201675965894024348
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2660381013864942807}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 021ba70e01cb5e9449852110effdb6fc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Sogeti.Session.GameRestarter
+  restartRequested: {fileID: 11400000, guid: a1c4f0e2b5d34f1ea0d5c71e9b204306, type: 2}
+--- !u!114 &159764235537876512
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2660381013864942807}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c5614fbb068641f4897e5e6cf93c82d8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Sogeti.UI.Panels.GamePanelController
+  phase: {fileID: 11400000, guid: 5579dbdcaaf0c374dacc0a11b5ef7836, type: 2}
+  roundEnded: {fileID: 11400000, guid: cb1bd1d1a84ae31419b4eb4f75a6f26c, type: 2}
+  startRoundRequested: {fileID: 11400000, guid: a1c4f0e2b5d34f1ea0d5c71e9b204305, type: 2}
+  restartRequested: {fileID: 11400000, guid: a1c4f0e2b5d34f1ea0d5c71e9b204306, type: 2}
+  panel: {fileID: 0}
+  placer: {fileID: 0}
+  playerHead: {fileID: 0}

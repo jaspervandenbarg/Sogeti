@@ -1,3 +1,4 @@
+using UnityAtoms.BaseAtoms;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -12,6 +13,10 @@ namespace Sogeti.Session
     [DisallowMultipleComponent]
     public class GameRestarter : MonoBehaviour
     {
+        [Tooltip("Raised by the game over panel. Nothing here knows which button asked.")]
+        [SerializeField]
+        private VoidEvent restartRequested;
+
         public void Restart()
         {
             Scene active = SceneManager.GetActiveScene();
@@ -24,6 +29,23 @@ namespace Sogeti.Session
             }
 
             SceneManager.LoadScene(active.buildIndex);
+        }
+
+        // The no argument overload never replays, so registering cannot reload the scene by itself.
+        private void OnEnable()
+        {
+            if (restartRequested != null)
+            {
+                restartRequested.Register(Restart);
+            }
+        }
+
+        private void OnDisable()
+        {
+            if (restartRequested != null)
+            {
+                restartRequested.Unregister(Restart);
+            }
         }
     }
 }
